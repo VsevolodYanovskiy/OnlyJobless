@@ -5,7 +5,7 @@
 This project represents web-service where you can train your interview skills throughout LLMs. Beat the awkwardness, fight the panic, and maybe even get the job you want.
 
 ## Project Structure
-![Scheme](Scheme.png)
+![Scheme](scheme.png)
 
 ## Задачи участников:
 1. TL: Яновский Всеволод. Задача: Реализация взаимодействия между фронтом и бэком. Ревью кода участников. Крайний срок выполнения: 3-4 дня после завершения задач последним из участников (кроме тестов).
