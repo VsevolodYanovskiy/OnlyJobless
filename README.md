@@ -10,7 +10,7 @@ This project represents web-service where you can train your interview skills th
 ## Задачи участников:
 1. TL: Яновский Всеволод. Задачи: Реализация взаимодействия с БД. Ревью кода участников. "Косметические" паравки кода участников. Крайний срок выполнения: 10 декабря.
 
-2. DEV1 TODO
+2. Backend: Густов Ян
 
 3. DEV2 TODO
 
