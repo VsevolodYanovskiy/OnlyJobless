@@ -5,7 +5,26 @@
 This project represents web-service where you can train your interview skills throughout LLMs. Beat the awkwardness, fight the panic, and maybe even get the job you want.
 
 ## Project Structure
-![Scheme](scheme.png)
+```mermaid
+graph TD
+    A(OnlyJobless project root)
+    A --> B(Docs)
+    A --> C(Tests)
+    A --> D(src)
+    A --> E(Readme.md)
+    B --> F(Requirements)
+    D --> G(Back)
+    D --> H(Front)
+    D --> I(shared)
+    G --> J(LLM_User logic)
+    G --> K(main)
+    G --> L(config)
+    H --> M(public)
+    H --> N(src)
+    J --> O(system promts)
+    J --> P(sending request)
+    J --> Q(getting response)
+```
 
 ## DB-Service scheme
 ```mermaid
