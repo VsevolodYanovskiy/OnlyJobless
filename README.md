@@ -8,7 +8,7 @@ This project represents web-service where you can train your interview skills th
 ![Scheme](scheme.png)
 
 ## DB-Service scheme
-```
+```mermaid
 graph TD
     A[Client] --> B[Backend Server]
     
