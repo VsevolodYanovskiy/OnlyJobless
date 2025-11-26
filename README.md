@@ -8,7 +8,41 @@ This project represents web-service where you can train your interview skills th
 ![Scheme](scheme.png)
 
 ## DB-Service scheme
-![DB](db.png)
+```
+graph TD
+    A[Client] --> B[Backend Server]
+    
+    B --> C[Controller Layer]
+    
+    C --> D[Auth Service]
+    C --> E[User Service]
+    C --> F[Profile Service]
+    
+    D --> G[Auth Module]
+    E --> H[Data Validation]
+    F --> I[File Storage]
+    
+    G --> J[Database]
+    H --> J
+    I --> J
+    
+    subgraph "Database Scheme"
+        J --> K[users]
+        J --> L[profiles]
+        J --> M[user_data]
+        
+        K --> N["id (PK)<br/>email<br/>password_hash<br/>created_at<br/>updated_at"]
+        L --> O["id (PK)<br/>user_id (FK)<br/>first_name<br/>last_name<br/>"]
+        M --> P["id (PK)<br/>user_id (FK)<br/>content<br/>metadata<br/>created_at"]
+    end
+    
+    J --> B
+    B --> A
+    style J fill:#e1f5fe
+    style K fill:#f3e5f5
+    style L fill:#e8f5e8
+    style M fill:#fff3e0
+```
 
 ## Задачи участников:
 1. TL: Яновский Всеволод. Задачи: Реализация возможности регистрации пользователей на сервисе для их дальнейшей авторизации. Реализация безопасного хранения паролей в БД. Ревью кода участников. "Косметические" паравки кода участников.  Срок выполнения задачи: 4-5 дней.
