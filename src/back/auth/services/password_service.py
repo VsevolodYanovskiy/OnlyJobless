@@ -2,23 +2,13 @@ import bcrypt
 from typing import Union
 import logging
 
-ENCODING = 'utf-8'
-SALT = bcrypt.gensalt()
-
 class PasswordService:
     """Сервис для безопасного хэширования и проверки паролей"""
     
     @staticmethod
     def get_hash(password: str) -> str:
         """Создает безопасный хэш пароля с использованием bcrypt"""
-        password = password.encode('utf-8')
-        key = bcrypt.kdf(
-            password=password,
-            salt=SALT,
-            desired_key_bytes=64,
-            rounds=200
-        )
-        return key
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     @staticmethod
     def is_strong(password: str) -> str:
         """Проверяет сложность пароля (длина, символы и т.д.)"""
@@ -37,5 +27,5 @@ class PasswordService:
     @staticmethod
     def verify(plain_password: str, hashed_password: str) -> bool:
         """Проверяет соответствие plain-text пароля его хэшу"""
-        return get_hash(plain_password) == hashed_password
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
