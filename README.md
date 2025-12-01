@@ -19,6 +19,9 @@ graph TD
     G --> J(LLM_User logic)
     G --> K(main)
     G --> L(config)
+    G <--> R(auth)
+    G <--> S(DB)
+    S <--> R
     H --> M(public)
     H --> N(src)
     J --> O(system promts)
