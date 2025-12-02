@@ -156,6 +156,10 @@ graph TD
 
 Да.
 
+### 17. API endpoints?
+
+TODO
+
 ## Стек технологий(примерно):
 1. Фронт: TypeScript.
 2. Бекэнд: Python + FastApi.
