@@ -4,6 +4,12 @@ on:
   push:
     branches: [ "**" ]
   pull_request:
+    branches: [ "**" ]name: CI Tests
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
     branches: [ "**" ]
 
 jobs:
@@ -101,12 +107,56 @@ jobs:
           fi
         fi
     
-    - name: ✅ Final status
+        - name: ✅ Final status
       if: always()
       run: |
         echo "========================================"
         echo "🎯 CI Pipeline Summary"
-        echo "✅ Python 3.12.5"
-        echo "✅ Tests checked"
-        echo "✅ Code quality (flake8, mypy)"
+        echo "Python: 3.12.5"
+        
+        # Проверяем результаты предыдущих шагов
+        echo "=== Step Results ==="
+        
+        # Flake8 результат
+        if [ "${{ steps.flake8_lint.outcome }}" == "success" ]; then
+          echo "Flake8: ✅ PASSED"
+        elif [ "${{ steps.flake8_lint.outcome }}" == "failure" ]; then
+          echo "Flake8: ❌ FAILED"
+        elif [ "${{ steps.flake8_lint.outcome }}" == "skipped" ]; then
+          echo "Flake8: ⏭️ SKIPPED"
+        else
+          echo "Flake8: ⚠️ ${{ steps.flake8_lint.outcome }}"
+        fi
+        
+        # Mypy результат
+        if [ "${{ steps.mypy_check.outcome }}" == "success" ]; then
+          echo "Mypy: ✅ PASSED"
+        elif [ "${{ steps.mypy_check.outcome }}" == "failure" ]; then
+          echo "Mypy: ❌ FAILED"
+        elif [ "${{ steps.mypy_check.outcome }}" == "skipped" ]; then
+          echo "Mypy: ⏭️ SKIPPED"
+        else
+          echo "Mypy: ⚠️ ${{ steps.mypy_check.outcome }}"
+        fi
+        
+        # Pytest результат
+        if [ "${{ steps.run_tests.outcome }}" == "success" ]; then
+          echo "Tests: ✅ PASSED"
+        elif [ "${{ steps.run_tests.outcome }}" == "failure" ]; then
+          echo "Tests: ❌ FAILED"
+        elif [ "${{ steps.run_tests.outcome }}" == "skipped" ]; then
+          echo "Tests: ⏭️ SKIPPED"
+        else
+          echo "Tests: ⚠️ ${{ steps.run_tests.outcome }}"
+        fi
+        
         echo "========================================"
+        
+        # Показываем общий статус
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✨ ALL CHECKS PASSED ✨"
+        elif [ "${{ job.status }}" == "failure" ]; then
+          echo "💥 SOME CHECKS FAILED 💥"
+        else
+          echo "⚠️ PIPELINE ${{ job.status }}"
+        fi
