@@ -179,15 +179,6 @@ jobs:
         elif [ "${{ job.status }}" == "cancelled" ]; then
           echo "║                    🛑 PIPELINE CANCELLED 🛑                   ║"
         else
-          echo "║                 ⚠️  PIPELINE ${{ job.status }} ⚠️                 ║"
+          echo "✅ No test files found - SUCCESS"
         fi
-        
-        echo "╚══════════════════════════════════════════════════════════════╝"
-        
-        # Сводка для логов
-        echo ""
-        echo "=== SUMMARY ==="
-        echo "Job Status: ${{ job.status }}"
-        echo "Flake8: ${{ steps.flake8_lint.outcome }}"
-        echo "Mypy: ${{ steps.mypy_check.outcome }}"
-        echo "Tests: ${{ steps.run_tests.outcome }}"
+>>>>>>> 6ac5966a34e3913f53f85039cd16c8978613998a
