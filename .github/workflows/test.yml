@@ -28,7 +28,7 @@ jobs:
         pip install bcrypt pytest pytest-cov
         
         # Для проверки качества кода
-        pip install flake8 mypy types-bcrypt
+        pip install flake8 mypy
         
         # Опционально - requirements.txt
         if [ -f docs/requirements.txt ]; then
