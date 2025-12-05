@@ -4,11 +4,12 @@ import logging
 
 class PasswordService:
     """Сервис для безопасного хэширования и проверки паролей"""
-    
+
     @staticmethod
     def get_hash(password: str) -> str:
         """Создает безопасный хэш пароля с использованием bcrypt"""
         return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
     @staticmethod
     def is_strong(password: str) -> str:
         """Проверяет сложность пароля (длина, символы и т.д.)"""
@@ -23,7 +24,7 @@ class PasswordService:
         if not any(char in "!@#$%^&*()-_+=[]" for char in password):
             return "This password ain't strong.\n Password may contain at least one of the following special symbols: '! @ # $ % ^ & * ( ) - _ + = [ ]'.\n Try another one"
         return "Your password is strong."
-    
+
     @staticmethod
     def verify(plain_password: str, hashed_password: str) -> bool:
         """Проверяет соответствие plain-text пароля его хэшу"""
