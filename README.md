@@ -161,7 +161,7 @@ graph TD
 TODO
 
 ## Стек технологий(примерно):
-1. Фронт: TypeScript.
+1. Фронт: TODO.
 2. Бекэнд: Python + FastApi.
 3. БД: Python + sqlalchemy.
 4. Авторизация: JWT.
