@@ -8,7 +8,11 @@ on:
 
 jobs:
   test:
+<<<<<<< HEAD
     name: Run Tests & Code Quality
+=======
+    name: Run Tests
+>>>>>>> 6ac5966a34e3913f53f85039cd16c8978613998a
     runs-on: ubuntu-latest
     
     steps:
@@ -18,12 +22,17 @@ jobs:
     - name: 🐍 Setup Python 3.12.5
       uses: actions/setup-python@v4
       with:
+<<<<<<< HEAD
         python-version: '3.12.5'
         cache: 'pip'
+=======
+        python-version: '3.11'
+>>>>>>> 6ac5966a34e3913f53f85039cd16c8978613998a
     
     - name: 📦 Install dependencies
       run: |
         python -m pip install --upgrade pip
+<<<<<<< HEAD
         # Основные для тестов
         pip install bcrypt pytest pytest-cov
         
@@ -31,6 +40,11 @@ jobs:
         pip install flake8 mypy types-bcrypt
         
         # Опционально - requirements.txt
+=======
+        pip install bcrypt pytest
+        
+        # Опционально
+>>>>>>> 6ac5966a34e3913f53f85039cd16c8978613998a
         if [ -f docs/requirements.txt ]; then
           pip install -r docs/requirements.txt 2>/dev/null || true
         fi
@@ -41,6 +55,7 @@ jobs:
         find . -name "*.py" | head -20
         echo "=== Tests ==="
         ls -la tests/ 2>/dev/null || echo "No tests directory"
+<<<<<<< HEAD
         echo "=== src ==="
         ls -la src/ 2>/dev/null || echo "No src directory"
     
@@ -76,6 +91,11 @@ jobs:
     
     - name: 🧪 Run tests if they exist
       run: |
+=======
+    
+    - name: 🧪 Run tests if they exist
+      run: |
+>>>>>>> 6ac5966a34e3913f53f85039cd16c8978613998a
         # Если нет тестов - успех
         if [ ! -d "tests" ]; then
           echo "✅ No tests directory - SUCCESS"
@@ -84,6 +104,7 @@ jobs:
         
         # Если есть файлы test_*.py - запускаем
         if find tests -name "test_*.py" -type f | grep -q .; then
+<<<<<<< HEAD
           echo "=== Running pytest ==="
           python -m pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
         else
@@ -110,3 +131,10 @@ jobs:
         echo "✅ Tests checked"
         echo "✅ Code quality (flake8, mypy)"
         echo "========================================"
+=======
+          echo "Running tests..."
+          python -m pytest tests/ -v || echo "Tests completed"
+        else
+          echo "✅ No test files found - SUCCESS"
+        fi
+>>>>>>> 6ac5966a34e3913f53f85039cd16c8978613998a
