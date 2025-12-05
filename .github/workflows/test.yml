@@ -1,4 +1,4 @@
-name: CI Tests - Changed Files Only
+name: CI Tests
 
 on:
   push:
@@ -7,183 +7,106 @@ on:
     branches: [ "**" ]
 
 jobs:
-  test-changed:
-    name: Test Changed Files
+  test:
+    name: Run Tests & Code Quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     
     steps:
-    - name: 📥 Checkout code with full history
+    - name: 📥 Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Полная история для сравнения
     
-    - name: 🐍 Setup Python
+    - name: 🐍 Setup Python 3.12.5
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.12.5'
         cache: 'pip'
-        cache-dependency-path: 'docs/requirements.txt'
     
     - name: 📦 Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Основные зависимости для проекта
-        pip install fastapi uvicorn sqlalchemy pydantic pytest pytest-cov
+        # Основные для тестов
+        pip install bcrypt pytest pytest-cov
         
-        # Дополнительные если есть requirements.txt
+        # Для проверки качества кода
+        pip install flake8 mypy types-bcrypt
+        
+        # Опционально - requirements.txt
         if [ -f docs/requirements.txt ]; then
           pip install -r docs/requirements.txt 2>/dev/null || true
         fi
     
-    - name: 🔍 Get changed Python files
-      id: changed_files
+    - name: 🔍 Check project structure
       run: |
-        echo "Event type: ${{ github.event_name }}"
-        
-        # Для PR: сравниваем с базовой веткой
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          BASE_REF="${{ github.base_ref }}"
-          echo "PR: Comparing with base ref: $BASE_REF"
-          # Получаем список измененных .py файлов
-          git diff --name-only "origin/$BASE_REF"...HEAD -- '*.py' > changed_py_files.txt
-          
-        # Для пуша: сравниваем с предыдущим коммитом  
+        echo "=== Project structure ==="
+        find . -name "*.py" | head -20
+        echo "=== Tests ==="
+        ls -la tests/ 2>/dev/null || echo "No tests directory"
+        echo "=== src ==="
+        ls -la src/ 2>/dev/null || echo "No src directory"
+    
+    - name: 🧹 Run flake8 linting
+      run: |
+        echo "=== Running flake8 ==="
+        if [ -d "src" ]; then
+          flake8 src/ --count --max-line-length=120 --statistics --show-source
         else
-          echo "Push: Comparing with previous commit"
-          git diff --name-only HEAD~1 HEAD -- '*.py' > changed_py_files.txt
+          echo "No src directory to lint"
         fi
         
-        # Показать что изменилось
-        echo "Changed Python files:"
-        cat changed_py_files.txt 2>/dev/null || echo "No changes"
-        
-        # Сохраняем в output
-        CHANGED_CONTENT=$(cat changed_py_files.txt 2>/dev/null || echo "")
-        echo "changed_py_files<<EOF" >> $GITHUB_OUTPUT
-        echo "$CHANGED_CONTENT" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        if [ -d "tests" ]; then
+          flake8 tests/ --count --max-line-length=120 --statistics --show-source
+        else
+          echo "No tests directory to lint"
+        fi
     
-    - name: 🧪 Run tests for changed modules
-      id: run_tests
-      env:
-        SECRET_KEY: test-secret-123
-        ALGORITHM: HS256
-        ENVIRONMENT: test
+    - name: 📝 Run mypy type checking
       run: |
-        # Если нет измененных .py файлов - выход с успехом
-        if [ -z "${{ steps.changed_files.outputs.changed_py_files }}" ]; then
-          echo "✅ No Python files changed - SUCCESS"
+        echo "=== Running mypy ==="
+        if [ -d "src" ]; then
+          mypy src/ --ignore-missing-imports --show-error-codes
+        else
+          echo "No src directory for type checking"
+        fi
+        
+        if [ -d "tests" ]; then
+          mypy tests/ --ignore-missing-imports --show-error-codes
+        else
+          echo "No tests directory for type checking"
+        fi
+    
+    - name: 🧪 Run tests if they exist
+      run: |
+        # Если нет тестов - успех
+        if [ ! -d "tests" ]; then
+          echo "✅ No tests directory - SUCCESS"
           exit 0
         fi
         
-        echo "=== Changed Python files ==="
-        echo "${{ steps.changed_files.outputs.changed_py_files }}"
-        echo "============================"
-        
-        # Создаем временный файл со списком изменений
-        echo "${{ steps.changed_files.outputs.changed_py_files }}" > /tmp/changed_files.txt
-        
-        # Python скрипт для поиска и запуска соответствующих тестов
-        python3 -c "
-import os
-import subprocess
-import sys
-
-# Читаем измененные файлы
-with open('/tmp/changed_files.txt', 'r') as f:
-    changed_files = [line.strip() for line in f if line.strip()]
-
-print(f'Found {len(changed_files)} changed Python file(s)')
-
-# Словарь для сопоставления исходных файлов с тестами
-test_map = {}
-
-for changed_file in changed_files:
-    # Получаем имя файла без расширения
-    # Пример: src/back/auth/controllers/auth.py -> auth
-    filename = os.path.basename(changed_file).replace('.py', '')
-    dirname = os.path.dirname(changed_file)
+        # Если есть файлы test_*.py - запускаем
+        if find tests -name "test_*.py" -type f | grep -q .; then
+          echo "=== Running pytest ==="
+          python -m pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
+        else
+          echo "✅ No test files found - SUCCESS"
+        fi
     
-    print(f'\\nProcessing: {changed_file}')
-    print(f'  Filename: {filename}')
-    print(f'  Directory: {dirname}')
-    
-    # Вариант 1: Ищем test_<filename>.py в tests/
-    possible_tests = [
-        f'tests/test_{filename}.py',
-        f'tests/{filename}/test_{filename}.py',
-        f'tests/{filename}_test.py',
-    ]
-    
-    # Вариант 2: Ищем по структуре каталогов
-    # src/back/auth/controllers/auth.py -> tests/auth/controllers/test_auth.py
-    if 'src/' in changed_file:
-        rel_path = changed_file.split('src/')[-1]
-        test_path = 'tests/' + rel_path.replace('.py', '').replace('/', '/test_') + '.py'
-        possible_tests.append(test_path)
-    
-    # Проверяем каждый возможный тест
-    found_tests = []
-    for test_file in possible_tests:
-        if os.path.exists(test_file):
-            found_tests.append(test_file)
-            print(f'  Found test: {test_file}')
-    
-    if found_tests:
-        test_map[changed_file] = found_tests
-    else:
-        print(f'  ⚠️ No specific test found for {filename}')
-        
-        # Ищем любые тесты, содержащие имя файла
-        import glob
-        all_tests = glob.glob('tests/**/*.py', recursive=True)
-        matching_tests = [t for t in all_tests if filename in t and 'test' in t]
-        
-        if matching_tests:
-            print(f'  Found related tests: {matching_tests}')
-            test_map[changed_file] = matching_tests
-
-# Собираем все уникальные тестовые файлы
-all_test_files = set()
-for tests in test_map.values():
-    all_test_files.update(tests)
-
-print(f'\\n=== Summary ===')
-print(f'Changed files: {len(changed_files)}')
-print(f'Test files to run: {len(all_test_files)}')
-
-if all_test_files:
-    print(f'\\nRunning tests:')
-    for test_file in sorted(all_test_files):
-        print(f'  - {test_file}')
-    
-    # Запускаем тесты
-    cmd = ['pytest', '-v', '--tb=short'] + list(all_test_files)
-    print(f'\\nCommand: {\" \".join(cmd)}')
-    result = subprocess.run(cmd)
-    sys.exit(result.returncode)
-else:
-    print('\\n⚠️ No specific tests found for changed files')
-    print('Running all tests instead...')
-    result = subprocess.run(['pytest', 'tests/', '-v', '--tb=short'])
-    sys.exit(result.returncode)
-"
-    
-    - name: 📊 Если нет тестов для изменений - запустить все
-      if: steps.run_tests.outcome == 'failure'
-      env:
-        SECRET_KEY: test-secret-123
-        ALGORITHM: HS256
-        ENVIRONMENT: test
+    - name: 📊 Generate coverage report
+      if: always()
       run: |
-        echo "Running all tests after specific tests failed..."
-        python -m pytest tests/ -v --tb=short
+        echo "=== Coverage Summary ==="
+        if [ -d "tests" ] && [ -d "src" ]; then
+          python -m pytest tests/ --cov=src --cov-report=xml --quiet 2>/dev/null || true
+          if [ -f "coverage.xml" ]; then
+            echo "Coverage report generated"
+          fi
+        fi
     
-    - name: ✅ Final success check
+    - name: ✅ Final status
       if: always()
       run: |
         echo "========================================"
-        echo "🎯 CI Pipeline completed"
-        echo "✅ Checked only changed files"
+        echo "🎯 CI Pipeline Summary"
+        echo "✅ Python 3.12.5"
+        echo "✅ Tests checked"
+        echo "✅ Code quality (flake8, mypy)"
         echo "========================================"
