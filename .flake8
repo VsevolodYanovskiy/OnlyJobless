@@ -1,7 +1,6 @@
 [flake8]
 max-line-length = 75
-ignore = 
-    # Игнорируем тесты полностью
+ignore =
     tests/
     */test_*.py
     *test.py
@@ -12,6 +11,6 @@ exclude =
     venv,
     env,
     migrations,
-    tests,          # Папка tests
-    */test_*.py,   # Файлы начинающиеся на test_
-    *test.py       # Файлы заканчивающиеся на test
+    tests,
+    */test_*.py,
+    *test.py
