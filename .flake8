@@ -1,0 +1,17 @@
+[flake8]
+max-line-length = 75
+ignore = 
+    # Игнорируем тесты полностью
+    tests/
+    */test_*.py
+    *test.py
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    migrations,
+    tests,          # Папка tests
+    */test_*.py,   # Файлы начинающиеся на test_
+    *test.py       # Файлы заканчивающиеся на test
