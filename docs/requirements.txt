@@ -26,3 +26,5 @@ types-passlib==1.7.6.0
 
 # Дополнительные
 psycopg2-binary==2.9.9  # для PostgreSQL
+
+pytest-picked==0.4.6
