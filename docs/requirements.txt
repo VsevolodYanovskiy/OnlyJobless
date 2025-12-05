@@ -20,11 +20,9 @@ flake8==6.1.0
 black==23.11.0
 isort==5.12.0
 mypy==1.7.0
-# Убраны типы, которые вызывают проблемы или добавим совместимые версии
-types-python-jose==3.3.4.8  # Исправленная версия
+types-python-jose==3.3.4.8
 types-passlib==1.7.6.0
 
-# Дополнительные
-psycopg2-binary==2.9.9  # для PostgreSQL
+psycopg2-binary==2.9.9
 
 pytest-picked==0.4.6
