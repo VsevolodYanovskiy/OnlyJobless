@@ -119,15 +119,20 @@ class TestPasswordService:
         with pytest.raises(Exception):
             PasswordService.get_hash("TestPassword123!")
 
+    @patch('src.back.auth.services.password_service.logger')
     @patch('bcrypt.checkpw')
-    def test_verify_bcrypt_error(self, mock_checkpw):
+    def test_verify_bcrypt_error(self, mock_checkpw, mock_logger):
         """Тест: обработка ошибки bcrypt при проверке"""
         # Arrange
-        mock_checkpw.side_effect = Exception("BCrypt check error")
+        error_msg = "BCrypt check error"
+        mock_checkpw.side_effect = Exception(error_msg)
         
-        # Act & Assert
-        with pytest.raises(Exception):
-            PasswordService.verify("password", "hashed_password")
+        # Act
+        result = PasswordService.verify("password", "hashed_password")
+        
+        # Assert
+        assert result is False
+        mock_logger.error.assert_called_once_with(f"Ошибка при проверке пароля: {error_msg}")
 
     def test_password_strength_edge_cases(self):
         """Тест: граничные случаи для проверки сложности"""
@@ -169,17 +174,15 @@ class TestPasswordService:
             "",  # пустой
             "invalid",  # не bcrypt
             "$2b$",  # неполный
+            b"bytes_hash",  # bytes вместо строки
         ]
         
         for invalid_hash in invalid_hashes:
-            # Act & Assert - ожидаем исключение или False
-            try:
-                result = PasswordService.verify("password", invalid_hash)
-                # Если не выбросило исключение, должно быть False
-                assert result is False
-            except ValueError:
-                # Исключение тоже допустимо
-                pass
+            # Act
+            result = PasswordService.verify("password", invalid_hash)
+            
+            # Assert - должно возвращать False при ошибке
+            assert result is False
 
     @pytest.mark.parametrize("password", [
         "TEST123!",
@@ -202,7 +205,155 @@ class TestPasswordService:
         assert inspect.isfunction(PasswordService.get_hash)
         assert inspect.isfunction(PasswordService.is_strong)
         assert inspect.isfunction(PasswordService.verify)
+        assert inspect.isfunction(PasswordService.get_hash_async)
+        assert inspect.isfunction(PasswordService.is_strong_async)
+        assert inspect.isfunction(PasswordService.verify_async)
         
         # Можно создать экземпляр, но методы остаются статическими
         service = PasswordService()
         assert service.get_hash("test") is not None
+
+    @pytest.mark.asyncio
+    async def test_get_hash_async_success(self):
+        """Тест: асинхронное хэширование успешно"""
+        # Arrange
+        password = "TestPassword123!"
+        
+        # Act
+        result = await PasswordService.get_hash_async(password)
+        
+        # Assert
+        assert isinstance(result, str)
+        assert result.startswith("$2b$") or result.startswith("$2a$") or result.startswith("$2y$")
+    
+    @pytest.mark.asyncio
+    async def test_is_strong_async_success(self):
+        """Тест: асинхронная проверка сложности пароля"""
+        # Arrange
+        strong_password = "StrongPass123!"
+        weak_password = "weak"
+        
+        # Act & Assert
+        strong_result = await PasswordService.is_strong_async(strong_password)
+        weak_result = await PasswordService.is_strong_async(weak_password)
+        
+        assert strong_result == "Your password is strong."
+        assert "ain't strong" in weak_result
+    
+    @pytest.mark.asyncio
+    async def test_verify_async_success(self):
+        """Тест: асинхронная проверка пароля"""
+        # Arrange
+        password = "TestPassword123!"
+        hashed_password = PasswordService.get_hash(password)
+        
+        # Act
+        result = await PasswordService.verify_async(password, hashed_password)
+        
+        # Assert
+        assert result is True
+    
+    @pytest.mark.asyncio
+    async def test_verify_async_wrong_password(self):
+        """Тест: асинхронная проверка неправильного пароля"""
+        # Arrange
+        password = "TestPassword123!"
+        wrong_password = "WrongPassword123!"
+        hashed_password = PasswordService.get_hash(password)
+        
+        # Act
+        result = await PasswordService.verify_async(wrong_password, hashed_password)
+        
+        # Assert
+        assert result is False
+    
+    @patch('bcrypt.hashpw')
+    @pytest.mark.asyncio
+    async def test_get_hash_async_bcrypt_error(self, mock_hashpw):
+        """Тест: обработка ошибки bcrypt при асинхронном хэшировании"""
+        # Arrange
+        mock_hashpw.side_effect = Exception("BCrypt error")
+        
+        # Act & Assert
+        with pytest.raises(Exception):
+            await PasswordService.get_hash_async("TestPassword123!")
+    
+    @patch('src.back.auth.services.password_service.logger')
+    @patch('bcrypt.checkpw')
+    @pytest.mark.asyncio
+    async def test_verify_async_bcrypt_error(self, mock_checkpw, mock_logger):
+        """Тест: обработка ошибки bcrypt при асинхронной проверке"""
+        # Arrange
+        error_msg = "BCrypt check error"
+        mock_checkpw.side_effect = Exception(error_msg)
+        
+        # Act
+        result = await PasswordService.verify_async("password", "hashed_password")
+        
+        # Assert
+        assert result is False
+        mock_logger.error.assert_called_once_with(f"Ошибка при проверке пароля (async): {error_msg}")
+    
+    def test_thread_pool_executor_initialized(self):
+        """Тест: ThreadPoolExecutor инициализирован"""
+        # Act
+        from src.back.auth.services.password_service import executor
+        
+        # Assert
+        assert executor is not None
+        assert executor._max_workers == 4
+    
+    def test_verify_with_none_inputs(self):
+        """Тест: проверка с None в качестве входных данных"""
+        # Act & Assert
+        # Все комбинации с None должны возвращать False
+        assert PasswordService.verify(None, "hash") is False
+        assert PasswordService.verify("password", None) is False
+        assert PasswordService.verify(None, None) is False
+    
+    @pytest.mark.asyncio
+    async def test_async_methods_with_none_inputs(self):
+        """Тест: асинхронные методы с None в качестве входных данных"""
+        # Act & Assert
+        result = await PasswordService.verify_async(None, "hash")
+        assert result is False
+    
+    def test_password_too_long(self):
+        """Тест: пароль слишком длинный для bcrypt"""
+        # bcrypt имеет ограничение на длину пароля (обычно 72 байта)
+        # Arrange
+        very_long_password = "A" * 1000
+        
+        # Act
+        hashed = PasswordService.get_hash(very_long_password)
+        result = PasswordService.verify(very_long_password, hashed)
+        
+        # Assert
+        # Bcrypt обрежет пароль, но проверка должна пройти
+        assert result is True
+    
+    def test_hash_verification_with_whitespace(self):
+        """Тест: проверка пароля с пробелами"""
+        # Arrange
+        password_with_spaces = "  Test 123!  "
+        hashed = PasswordService.get_hash(password_with_spaces)
+        
+        # Act & Assert
+        assert PasswordService.verify(password_with_spaces, hashed) is True
+        assert PasswordService.verify("Test 123!", hashed) is False  # Без внешних пробелов
+    
+    def test_special_characters_in_all_positions(self):
+        """Тест: специальные символы в разных позициях пароля"""
+        special_chars = "!@#$%^&*()-_+=[]"
+        
+        for char in special_chars:
+            for position in [0, 5, -1]:  # Начало, середина, конец
+                password = list("Test123pass")
+                if position == -1:
+                    position = len(password)
+                if position <= len(password):
+                    password.insert(position, char)
+                    password_str = "".join(password)
+                    
+                    result = PasswordService.is_strong(password_str)
+                    assert result == "Your password is strong."
