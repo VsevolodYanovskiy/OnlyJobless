@@ -3,6 +3,17 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import datetime
 from encryption import DataEncryptor
+from ...config.security import get_security_settings
+from .encryption import DataEncryptor
+
+
+try:
+    settings = get_security_settings()
+    encryptor = DataEncryptor(encryption_key=settings.encryption_key)
+except Exception as e:
+    print(f"Внимание: Не удалось инициализировать шифратор: {e}")
+    print("Установите переменную окружения ENCRYPTION_KEY")
+    raise
 
 Base = declarative_base()
 
@@ -37,7 +48,7 @@ class User(Base):
             self.email = email
         if password_hash:
             self.password_hash = password_hash
-    
+
     def to_dict(self, include_encrypted: bool = False) -> dict:
         """
         Преобразует объект пользователя в словарь.

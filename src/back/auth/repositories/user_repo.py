@@ -2,10 +2,11 @@ import asyncio
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete, or_
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 import logging
 from ..models.user_auth import User, UserUtils
+import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -13,14 +14,13 @@ logger = logging.getLogger(__name__)
 
 class UserRepository:
     """Асинхронный репозиторий для работы с данными пользователей в базе данных"""
+    
     def __init__(self, db_session: AsyncSession):
         """Инициализация репозитория с асинхронной сессией базы данных"""
         self.db_session = db_session
 
     async def create_user(self, user_data: dict) -> Optional[User]:
-        """
-        Создает нового пользователя в базе данных асинхронно.
-        """
+        """Создает нового пользователя в базе данных асинхронно"""
         try:
             email = user_data.get('email')
             if not email or not UserUtils.validate_email_format(email):
@@ -34,6 +34,7 @@ class UserRepository:
             self.db_session.add(user)
             await self.db_session.flush()
             await self.db_session.commit()
+            await self.db_session.refresh(user)
             logger.info(f"Создан пользователь с ID: {user.id}")
             return user
         except IntegrityError as e:
@@ -45,10 +46,35 @@ class UserRepository:
             logger.error(f"Ошибка при создании пользователя: {e}")
             return None
 
+    async def get_user_by_email(self, email: str) -> Optional[User]:
+        """Асинхронно находит пользователя по email адресу"""
+        try:
+            stmt = select(User)
+            result = await self.db_session.execute(stmt)
+            users = result.scalars().all()
+            for user in users:
+                try:
+                    if user.email == email:
+                        return user
+                except Exception:
+                    continue
+            return None
+        except Exception as e:
+            logger.error(f"Ошибка при поиске пользователя по email {email}: {e}")
+            return None
+
+    async def get_user_by_encrypted_email(self, encrypted_email: str) -> Optional[User]:
+        """Эффективно находит пользователя по зашифрованному email"""
+        try:
+            stmt = select(User).where(User.email_encrypted == encrypted_email)
+            result = await self.db_session.execute(stmt)
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logger.error(f"Ошибка при поиске по зашифрованному email: {e}")
+            return None
+
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
-        """
-        Асинхронно находит пользователя по его ID.
-        """
+        """Асинхронно находит пользователя по его ID"""
         try:
             stmt = select(User).where(User.id == user_id)
             result = await self.db_session.execute(stmt)
@@ -58,9 +84,7 @@ class UserRepository:
             return None
 
     async def update_user(self, user_id: int, update_data: dict) -> Optional[User]:
-        """
-        Асинхронно обновляет данные пользователя.
-        """
+        """Асинхронно обновляет данные пользователя"""
         try:
             user = await self.get_user_by_id(user_id)
             if not user:
@@ -78,31 +102,22 @@ class UserRepository:
                 user.update_email(email)
                 del update_data['email']
             for key, value in update_data.items():
-                if hasattr(user, key):
+                if hasattr(user, key) and not key.startswith('_'):
                     setattr(user, key, value)
-                else:
-                    logger.warning(f"Поле {key} не существует в модели User")
-            user.updated_at = func.now() if hasattr(func, 'now') else datetime.datetime.utcnow()
+            user.updated_at = datetime.datetime.utcnow()
             await self.db_session.commit()
+            await self.db_session.refresh(user)
             logger.info(f"Обновлен пользователь с ID: {user_id}")
             return user
-        except IntegrityError as e:
-            await self.db_session.rollback()
-            logger.error(f"Ошибка целостности при обновлении пользователя {user_id}: {e}")
-            return None
         except Exception as e:
             await self.db_session.rollback()
             logger.error(f"Ошибка при обновлении пользователя {user_id}: {e}")
             return None
 
     async def delete_user(self, user_id: int) -> bool:
-        """
-        Асинхронно удаляет пользователя из базы данных.
-        """
+        """Асинхронно удаляет пользователя из базы данных"""
         try:
-            stmt = select(User).where(User.id == user_id)
-            result = await self.db_session.execute(stmt)
-            user = result.scalar_one_or_none()
+            user = await self.get_user_by_id(user_id)
             if not user:
                 logger.warning(f"Пользователь с ID {user_id} не найден")
                 return False
@@ -114,3 +129,23 @@ class UserRepository:
             await self.db_session.rollback()
             logger.error(f"Ошибка при удалении пользователя {user_id}: {e}")
             return False
+
+    async def get_all_users(self, limit: int = 100, offset: int = 0) -> List[User]:
+        """Асинхронно получает список всех пользователей"""
+        try:
+            stmt = select(User).limit(limit).offset(offset)
+            result = await self.db_session.execute(stmt)
+            return result.scalars().all()
+        except Exception as e:
+            logger.error(f"Ошибка при получении списка пользователей: {e}")
+            return []
+
+    async def count_users(self) -> int:
+        """Асинхронно подсчитывает общее количество пользователей"""
+        try:
+            stmt = select(func.count(User.id))
+            result = await self.db_session.execute(stmt)
+            return result.scalar()
+        except Exception as e:
+            logger.error(f"Ошибка при подсчете пользователей: {e}")
+            return 0

@@ -20,11 +20,11 @@ class DataEncryptor:
                 "Ключ шифрования не найден. "
                 "Укажите его в параметре или установите переменную окружения ENCRYPTION_KEY"
             )
-    
+
     def _generate_salt(self) -> bytes:
         """Генерирует случайную соль для шифрования."""
         return os.urandom(16)
-    
+
     def _get_fernet_key(self, salt: bytes) -> bytes:
         """
         Создает ключ Fernet из основного ключа и соли.
@@ -51,7 +51,7 @@ class DataEncryptor:
         encrypted_base64 = base64.urlsafe_b64encode(encrypted_bytes).decode('utf-8')
         salt_base64 = base64.urlsafe_b64encode(salt).decode('utf-8')
         return encrypted_base64, salt_base64
-    
+
     def decrypt(self, encrypted_data: str, salt_base64: str) -> str:
         """
         Дешифрует данные.
