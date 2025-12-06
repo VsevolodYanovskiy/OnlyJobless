@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 75
+ignore =
+    tests/
+    */test_*.py
+    *test.py
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    migrations,
+    tests,
+    */test_*.py,
+    *test.py
