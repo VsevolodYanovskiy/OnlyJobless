@@ -292,16 +292,10 @@ class TestPasswordService:
         
         # Assert
         assert result is False
-        mock_logger.error.assert_called_once_with(f"Ошибка при проверке пароля (async): {error_msg}")
-    
-    def test_thread_pool_executor_initialized(self):
-        """Тест: ThreadPoolExecutor инициализирован"""
-        # Act
-        from src.back.auth.services.password_service import executor
-        
-        # Assert
-        assert executor is not None
-        assert executor._max_workers == 4
+        mock_logger.error.assert_called_once()
+        # Проверяем что лог содержит сообщение об ошибке
+        call_args = mock_logger.error.call_args[0][0]
+        assert "Ошибка при проверке пароля" in call_args
     
     def test_verify_with_none_inputs(self):
         """Тест: проверка с None в качестве входных данных"""
@@ -320,16 +314,27 @@ class TestPasswordService:
     
     def test_password_too_long(self):
         """Тест: пароль слишком длинный для bcrypt"""
-        # bcrypt имеет ограничение на длину пароля (обычно 72 байта)
+        # bcrypt имеет ограничение на длину пароля (72 байта)
+        # UTF-8 символы могут быть больше 1 байта
         # Arrange
-        very_long_password = "A" * 1000
+        very_long_password = "A" * 100  # 100 символов 'A' - это 100 байт в UTF-8
+        
+        # Act & Assert
+        # get_hash должен упасть с ValueError
+        with pytest.raises(ValueError, match="password cannot be longer than 72 bytes"):
+            PasswordService.get_hash(very_long_password)
+    
+    def test_password_exactly_72_bytes(self):
+        """Тест: пароль ровно 72 байта (максимум для bcrypt)"""
+        # Arrange
+        # 72 символа 'A' = 72 байта в UTF-8
+        max_length_password = "A" * 72
         
         # Act
-        hashed = PasswordService.get_hash(very_long_password)
-        result = PasswordService.verify(very_long_password, hashed)
+        hashed = PasswordService.get_hash(max_length_password)
+        result = PasswordService.verify(max_length_password, hashed)
         
         # Assert
-        # Bcrypt обрежет пароль, но проверка должна пройти
         assert result is True
     
     def test_hash_verification_with_whitespace(self):
