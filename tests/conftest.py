@@ -174,15 +174,3 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "async: async tests")
     config.addinivalue_line("markers", "encryption: encryption tests")
 
-def pytest_collection_modifyitems(config, items):
-    """Автоматически помечать тесты по их расположению"""
-    for item in items:
-        # Тесты в integration/ помечаем как интеграционные
-        if "integration" in item.nodeid:
-            item.add_marker(pytest.mark.integration)
-        # Тесты с базой данных
-        if any(keyword in item.nodeid for keyword in ["db", "database", "sql", "repo"]):
-            item.add_marker(pytest.mark.db)
-        # Тесты с async в названии метода
-        if "async" in item.nodeid.lower():
-            item.add_marker(pytest.mark.async)
