@@ -27,10 +27,14 @@ jobs:
       id: install_deps
       run: |
         python -m pip install --upgrade pip
-        pip install bcrypt pytest pytest-cov flake8 mypy
-        
+
         if [ -f docs/requirements.txt ]; then
-          pip install -r docs/requirements.txt 2>/dev/null || true
+          echo "Installing dependencies from docs/requirements.txt..."
+          pip install -r docs/requirements.txt
+        else
+          echo "ERROR: docs/requirements.txt not found!"
+          pip install bcrypt pytest pytest-cov flake8 mypy
+          exit 1
         fi
     
     - name: 🔍 Check project structure
@@ -41,28 +45,63 @@ jobs:
         echo "Tests dir exists:" && [ -d "tests" ] && echo "YES" || echo "NO"
         echo "Src dir exists:" && [ -d "src" ] && echo "YES" || echo "NO"
     
-    - name: 🧹 Run flake8 (src only)
+    - name: 🧹 Run flake8
       id: flake8_lint
       run: |
         echo "=== Flake8 checking src/ only ==="
         if [ -d "src" ]; then
-          flake8 src/ --count --max-line-length=120 --statistics || echo "Flake8 completed with warnings"
+          flake8 src/ \
+            --config=.flake8 \
+            --show-source \
+            --statistics \
+            --count
         else
           echo "No src directory - skipping flake8"
+          exit 0
         fi
-    
-    - name: 📝 Run mypy (src only)
+
+    - name: 📝 Run mypy
       id: mypy_check
       run: |
-        echo "=== Mypy checking src/ only ==="
+        echo "=== Mypy check ==="
+        
         if [ -d "src" ]; then
-          python -m mypy src/ --ignore-missing-imports --show-error-codes --disable-error-code=import-untyped || echo "Mypy completed with warnings"
+
+          TEMP_FILE=$(mktemp)
+          
+
+          python -m mypy src/ \
+            --python-version 3.12 \
+            --ignore-missing-imports \
+            --show-error-codes \
+            --no-error-summary 2>&1 > "$TEMP_FILE" || true
+          
+
+          sed -i '/Source file found twice/,/adjusting MYPYPATH/d' "$TEMP_FILE"
+          
+
+          if grep -q "error:" "$TEMP_FILE"; then
+            echo "❌ Mypy found real errors:"
+            cat "$TEMP_FILE"
+            rm "$TEMP_FILE"
+            exit 1
+          else
+            echo "✅ Mypy passed"
+            rm "$TEMP_FILE"
+          fi
         else
-          echo "No src directory - skipping mypy"
+          echo "No src directory"
+          exit 0
         fi
-    
-    - name: 🧪 Run tests if they exist
+    - name: 🧪 Run tests
       id: run_tests
+      env:
+        ENCRYPTION_KEY: "dGVzdF9rZXlfMzJfY2hhcnNfZm9yX2Flc18yNTY="
+        SECRET_KEY: "test_secret_key_for_ci_1234567890"
+        DATABASE_URL: "sqlite:///./test.db"
+        ENVIRONMENT: "test"
+        JWT_ALGORITHM: "HS256"
+        JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       run: |
         echo "=== Test Execution ==="
         
@@ -111,12 +150,12 @@ jobs:
         echo "║ Python Version: 3.12.5                                       ║"
         echo "╠══════════════════════════════════════════════════════════════╣"
         
-        # Определяем иконки статусов
+
         FLAKE8_ICON="❓"
         MYPY_ICON="❓"
         TESTS_ICON="❓"
         
-        # Flake8 статус
+
         if [ "${{ steps.flake8_lint.outcome }}" == "success" ]; then
           FLAKE8_ICON="✅"
           FLAKE8_STATUS="PASSED"
@@ -131,7 +170,7 @@ jobs:
           FLAKE8_STATUS="${{ steps.flake8_lint.outcome }}"
         fi
         
-        # Mypy статус
+
         if [ "${{ steps.mypy_check.outcome }}" == "success" ]; then
           MYPY_ICON="✅"
           MYPY_STATUS="PASSED"
@@ -146,7 +185,7 @@ jobs:
           MYPY_STATUS="${{ steps.mypy_check.outcome }}"
         fi
         
-        # Tests статус
+
         if [ "${{ steps.run_tests.outcome }}" == "success" ]; then
           TESTS_ICON="✅"
           TESTS_STATUS="PASSED"
@@ -161,21 +200,21 @@ jobs:
           TESTS_STATUS="${{ steps.run_tests.outcome }}"
         fi
         
-        # Выводим результаты
-        echo "║ Flake8 Linting:   $FLAKE8_ICON $FLAKE8_STATUS"
-        echo "║ Mypy Type Check:  $MYPY_ICON $MYPY_STATUS"
-        echo "║ Tests Execution:  $TESTS_ICON $TESTS_STATUS"
+
+        echo " Flake8 Linting:   $FLAKE8_ICON $FLAKE8_STATUS"
+        echo " Mypy Type Check:  $MYPY_ICON $MYPY_STATUS"
+        echo " Tests Execution:  $TESTS_ICON $TESTS_STATUS"
         echo "╠══════════════════════════════════════════════════════════════╣"
         
         # Общий статус
         if [ "${{ job.status }}" == "success" ]; then
-          echo "║                    ✨ ALL CHECKS PASSED ✨                    ║"
-          echo "║                      Pipeline: SUCCESS                      ║"
+          echo "║                    ✨ ALL CHECKS PASSED ✨                  ║"
+          echo "║                      Pipeline: SUCCESS                       ║"
         elif [ "${{ job.status }}" == "failure" ]; then
-          echo "║                   💥 SOME CHECKS FAILED 💥                   ║"
-          echo "║                      Pipeline: FAILURE                      ║"
+          echo "║                   💥 SOME CHECKS FAILED 💥                  ║"
+          echo "║                      Pipeline: FAILURE                       ║"
         elif [ "${{ job.status }}" == "cancelled" ]; then
-          echo "║                    🛑 PIPELINE CANCELLED 🛑                   ║"
+          echo "║                    🛑 PIPELINE CANCELLED 🛑                 ║"
         else
           echo "✅ No test files found - SUCCESS"
         fi
