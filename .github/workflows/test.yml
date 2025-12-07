@@ -52,7 +52,7 @@ jobs:
       run: |
         echo "=== Flake8 checking src/ only ==="
         if [ -d "src" ]; then
-          flake8 src/ --count --max-line-length=120 --statistics || echo "Flake8 completed with warnings"
+          flake8 src/ --count --max-line-length=120 --statistics
         else
           echo "No src directory - skipping flake8"
         fi
@@ -62,7 +62,7 @@ jobs:
       run: |
         echo "=== Mypy checking src/ only ==="
         if [ -d "src" ]; then
-          python -m mypy src/ --ignore-missing-imports --show-error-codes --disable-error-code=import-untyped || echo "Mypy completed with warnings"
+          python -m mypy src/ --config-file=mypy.ini
         else
           echo "No src directory - skipping mypy"
         fi
