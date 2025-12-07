@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 import datetime
 from pydantic import ValidationInfo
+import ConfigDict
 
 
 class UserRegister(BaseModel):

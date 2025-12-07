@@ -1,5 +1,5 @@
 from typing import Optional
-from ..schemes.auth_schemes import UserRegister, UserLogin
+from src.back.schemes.auth_schemes import UserRegister, UserLogin
 from ..models.user_auth import User, UserUtils
 import logging
 
