@@ -1,7 +1,6 @@
 from __future__ import annotations
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.declarative.api import DeclarativeMeta
 from sqlalchemy.sql import func
 import datetime
 import re
@@ -18,10 +17,10 @@ except Exception as e:
     print("Установите переменную окружения ENCRYPTION_KEY")
     raise
 
-Base: DeclarativeMeta = declarative_base()
+Base = declarative_base()
 
 
-class User(Base):
+class User(Base):  # type: ignore[misc]
     """Модель пользователя с шифрованием персональных данных"""
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
