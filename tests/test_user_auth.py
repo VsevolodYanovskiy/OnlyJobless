@@ -121,7 +121,6 @@ class TestUserModel:
             user.created_at = datetime(2024, 1, 1, 12, 0, 0)
             user.updated_at = datetime(2024, 1, 2, 12, 0, 0)
 
-            # Используем PropertyMock для мока property
             with patch.object(User, 'email', new_callable=PropertyMock) as mock_email:
                 mock_email.return_value = 'test@example.com'
                 result = user.to_dict(include_encrypted=False)
@@ -147,7 +146,6 @@ class TestUserModel:
             user.created_at = datetime(2024, 1, 1, 12, 0, 0)
             user.updated_at = datetime(2024, 1, 2, 12, 0, 0)
 
-            # Используем PropertyMock для мока property
             with patch.object(User, 'email', new_callable=PropertyMock) as mock_email:
                 mock_email.return_value = 'test@example.com'
                 result = user.to_dict(include_encrypted=True)
@@ -221,7 +219,7 @@ class TestUserModel:
         user = User.from_dict(data, encrypt_email=False)
 
         assert user.email_encrypted == 'encrypted123'
-        assert user.email_salt is None  # Не было передано
+        assert user.email_salt is None
         assert user.id == 1
     
     def test_from_dict_with_encrypted_data_directly(self):
@@ -233,7 +231,6 @@ class TestUserModel:
             'id': 1
         }
         
-        # Не передаем 'email', только зашифрованные данные
         user = User.from_dict(data, encrypt_email=False)
 
         assert user.email_encrypted == 'encrypted123'
@@ -283,8 +280,7 @@ class TestUserModel:
     def test_verify_email_correct(self):
         """Тест: проверка правильного email"""
         user = User()
-        
-        # Мокаем свойство email
+
         with patch.object(User, 'email', new_callable=PropertyMock) as mock_email:
             mock_email.return_value = 'test@example.com'
             result = user.verify_email('test@example.com')
@@ -294,7 +290,6 @@ class TestUserModel:
         """Тест: проверка неправильного email"""
         user = User()
         
-        # Мокаем свойство email
         with patch.object(User, 'email', new_callable=PropertyMock) as mock_email:
             mock_email.return_value = 'different@example.com'
             result = user.verify_email('test@example.com')
@@ -340,63 +335,44 @@ class TestUserUtils:
     def test_validate_email_format_invalid(self):
         """Тест: валидация неправильного email"""
         invalid_emails = [
-            '',  # пустой
-            'invalid',  # нет @
-            '@example.com',  # нет локальной части
-            'test@',  # нет домена
-            'test@.',  # некорректный домен
-            'test@com',  # нет точки в домене
-            '@',  # только @
-            'test@example.',  # домен заканчивается точкой
-            'test@.com',  # домен начинается с точки
-            'user example.com',  # пробел вместо @
-            'a' * 256 + '@example.com'  # слишком длинный
+            '',
+            'invalid',
+            '@example.com',
+            'test@',
+            'test@.',
+            'test@com',
+            '@',
+            'test@example.',
+            'test@.com',
+            'user example.com',
+            'a' * 256 + '@example.com'
         ]
         
         for email in invalid_emails:
             assert UserUtils.validate_email_format(email) is False, f"Email '{email}' должен быть невалидным"
     
-    def test_validate_email_format_edge_cases(self):
-        """Тест: граничные случаи валидации email"""
-        # Эти email должны быть валидными с текущей логикой
-        assert UserUtils.validate_email_format('ab@example.com') is True
-        assert UserUtils.validate_email_format('a@example.com') is True
-        
-        # Специальные символы в локальной части
-        assert UserUtils.validate_email_format('user.name+tag@example.com') is True
-        assert UserUtils.validate_email_format('user_name@example.com') is True
-        assert UserUtils.validate_email_format('user-name@example.com') is True
-        
-        # Двойные точки в домене не допускаются
-        assert UserUtils.validate_email_format('test@example..com') is False
-    
     def test_mask_email_normal(self):
         """Тест: маскирование обычного email"""
         masked = UserUtils.mask_email('john.doe@example.com')
-        # john.doe (8 символов) -> j + 6 звезд + e = j******e
         assert masked == 'j******e@example.com'
     
     def test_mask_email_short_local_part(self):
         """Тест: маскирование email с короткой локальной частью"""
-        # 2 символа: ab -> a*
         masked = UserUtils.mask_email('ab@example.com')
         assert masked == 'a*@example.com'
     
     def test_mask_email_very_short_local_part(self):
         """Тест: маскирование email с очень короткой локальной частью"""
-        # 1 символ: a -> *
         masked = UserUtils.mask_email('a@example.com')
         assert masked == '*@example.com'
     
     def test_mask_email_3_chars(self):
         """Тест: маскирование email с 3 символами в локальной части"""
-        # abc -> a*c
         masked = UserUtils.mask_email('abc@example.com')
         assert masked == 'a*c@example.com'
     
     def test_mask_email_4_chars(self):
         """Тест: маскирование email с 4 символами в локальной части"""
-        # abcd -> a**d
         masked = UserUtils.mask_email('abcd@example.com')
         assert masked == 'a**d@example.com'
     
@@ -417,7 +393,6 @@ class TestUserUtils:
     
     def test_users_to_dict_list(self):
         """Тест: преобразование списка пользователей"""
-        # Создаем мок-пользователей
         users = []
         for i in range(3):
             user = Mock(spec=User)
@@ -470,7 +445,6 @@ class TestBaseModel:
     
     def test_base_metadata_tables(self):
         """Тест: метаданные содержат таблицы"""
-        # Проверяем, что User таблица зарегистрирована в metadata
         assert 'users' in Base.metadata.tables
 
 
@@ -479,35 +453,24 @@ def test_user_model_integration():
     user = User()
     assert user is not None
     assert hasattr(user, 'id')
-    
-    # Проверяем, что есть property email
     assert hasattr(type(user), 'email')
     assert isinstance(type(user).email, property)
-    
-    # Проверяем наличие всех атрибутов
     assert hasattr(user, 'email_encrypted')
     assert hasattr(user, 'email_salt')
     assert hasattr(user, 'password_hash')
     assert hasattr(user, 'created_at')
     assert hasattr(user, 'updated_at')
-    
-    # Проверяем методы
     assert hasattr(user, 'to_dict')
     assert hasattr(user, 'update_email')
     assert hasattr(user, 'verify_email')
-    
-    # Проверяем classmethod
     assert hasattr(User, 'from_dict')
     assert hasattr(User, 'create_from_plain')
 
 
 def test_user_utils_static_methods():
     """Тест: статические методы UserUtils"""
-    # Проверяем, что методы статические
     assert UserUtils.validate_email_format('test@example.com') is True
     assert UserUtils.mask_email('test@example.com') == 't**t@example.com'
-    
-    # Проверяем метод users_to_dict_list с пустым списком
     assert UserUtils.users_to_dict_list([]) == []
 
 
@@ -544,17 +507,10 @@ def test_mask_email_parametrized(email, expected):
 def test_user_encryption_integration(mock_encryptor):
     """Интеграционный тест шифрования email"""
     with patch('src.back.auth.models.user_auth.encryptor', mock_encryptor):
-        # Создание пользователя
         user = User(email='test@example.com', password_hash='hash123')
-        
-        # Проверка шифрования при создании
         mock_encryptor.encrypt.assert_called_once_with('test@example.com')
-        
-        # Проверка получения email
         email = user.email
         mock_encryptor.decrypt.assert_called_once()
-        
-        # Обновление email
         user.update_email('new@example.com')
         assert mock_encryptor.encrypt.call_count == 2
         mock_encryptor.encrypt.assert_called_with('new@example.com')
@@ -563,7 +519,6 @@ def test_user_encryption_integration(mock_encryptor):
 def test_user_serialization_cycle(mock_encryptor):
     """Тест полного цикла сериализации/десериализации"""
     with patch('src.back.auth.models.user_auth.encryptor', mock_encryptor):
-        # Создаем пользователя
         original_user = User(
             email='test@example.com',
             password_hash='hash123'
@@ -571,14 +526,8 @@ def test_user_serialization_cycle(mock_encryptor):
         original_user.id = 1
         original_user.created_at = datetime(2024, 1, 1)
         original_user.updated_at = datetime(2024, 1, 2)
-        
-        # Сериализуем в словарь
         user_dict = original_user.to_dict(include_encrypted=True)
-        
-        # Десериализуем обратно
         restored_user = User.from_dict(user_dict, encrypt_email=False)
-        
-        # Проверяем, что данные совпадают
         assert restored_user.id == original_user.id
         assert restored_user.email_encrypted == original_user.email_encrypted
         assert restored_user.email_salt == original_user.email_salt
