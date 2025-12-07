@@ -1,6 +1,7 @@
 from __future__ import annotations
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative.api import DeclarativeMeta
 from sqlalchemy.sql import func
 import datetime
 import re
@@ -17,7 +18,7 @@ except Exception as e:
     print("Установите переменную окружения ENCRYPTION_KEY")
     raise
 
-Base = declarative_base()
+Base: DeclarativeMeta = declarative_base()
 
 
 class User(Base):

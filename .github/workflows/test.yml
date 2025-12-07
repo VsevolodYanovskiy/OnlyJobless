@@ -45,7 +45,7 @@ jobs:
         echo "Tests dir exists:" && [ -d "tests" ] && echo "YES" || echo "NO"
         echo "Src dir exists:" && [ -d "src" ] && echo "YES" || echo "NO"
     
-    - name: 🧹 Run flake8 with strict mode and full output
+    - name: 🧹 Run flake8
       id: flake8_lint
       run: |
         echo "=== Flake8 checking src/ only ==="
@@ -60,7 +60,7 @@ jobs:
           exit 0
         fi
 
-    - name: 📝 Run mypy with proper filtering
+    - name: 📝 Run mypy
       id: mypy_check
       run: |
         echo "=== Mypy check ==="
@@ -93,7 +93,7 @@ jobs:
           echo "No src directory"
           exit 0
         fi
-    - name: 🧪 Run tests if they exist
+    - name: 🧪 Run tests
       id: run_tests
       env:
         ENCRYPTION_KEY: "dGVzdF9rZXlfMzJfY2hhcnNfZm9yX2Flc18yNTY="
