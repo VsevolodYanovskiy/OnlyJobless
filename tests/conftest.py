@@ -173,4 +173,3 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "db: database tests")
     config.addinivalue_line("markers", "async: async tests")
     config.addinivalue_line("markers", "encryption: encryption tests")
-
