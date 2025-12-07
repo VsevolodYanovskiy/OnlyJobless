@@ -1,5 +1,4 @@
 from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
 import datetime
 
 
@@ -9,11 +8,15 @@ class UserRegister(BaseModel):
     password: str
     password_confirm: str
     @field_validator('password_confirm')
-    def passwords_match(cls, v, values):
-        """Валидатор для проверки совпадения паролей"""
-        if 'password' in values and v != values['password']:
+    @classmethod
+    def passwords_match(cls, v, info: ValidationInfo):
+        if 'password' in info.data and v != info.data['password']:
             raise ValueError('Пароли не совпадают')
         return v
+    @field_validator('email')
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
 
 
 class UserLogin(BaseModel):
@@ -27,9 +30,9 @@ class UserResponse(BaseModel):
     id: int
     email: str
     created_at: datetime.datetime
-    
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+    def to_json(self) -> str:
+        return self.model_dump_json()
 
 
 class TokenResponse(BaseModel):

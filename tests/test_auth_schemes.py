@@ -107,7 +107,7 @@ class TestAuthSchemas:
         mock_user = MockUser()
         
         # Act
-        response = UserResponse.from_orm(mock_user)
+        response = UserResponse.model_validate(mock_user)
         
         # Assert
         assert response.id == 1
@@ -162,7 +162,7 @@ class TestAuthSchemas:
         )
         
         # Assert
-        assert login.email == "TEST@EXAMPLE.COM"
+        assert login.email == "test@example.com"
     
     @pytest.mark.parametrize("email", [
         "user@example.com",
