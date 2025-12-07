@@ -39,7 +39,7 @@ class TestPasswordService:
         ("nouppercase1!", "This password ain't strong. Password may contain uppercase letters. Try another one"),
         ("NOLOWERCASE1!", "This password ain't strong. Password may contain lowercase letters. Try another one"),
         ("NoNumbers!", "This password ain't strong. Password may contain numbers. Try another one"),
-        ("NoSpecial123", "This password ain't strong.\n Password may contain at least one of the following special symbols: '! @ # $ % ^ & * ( ) - _ + = [ ]'.\n Try another one"),
+        ("NoSpecial123", "This password ain't strong.\nPassword may contain at least one of the following special symbols: '! @ # $ % ^ & * ( ) - _ + = [ ]'.\nTry another one"),
         ("Another!123", "Your password is strong."),
         ("Test@123Pass", "Your password is strong."),
         ("Strong#2024", "Your password is strong."),
