@@ -1,0 +1,23 @@
+# .coveragerc
+[run]
+source = src
+omit =
+    */tests/*
+    */__pycache__/*
+    */migrations/*
+    setup.py
+
+[report]
+# Исключить из coverage тривиальный код
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    def __str__
+    @property
+    @.*setter
+    if __name__ == .__main__.:
+    logger\.
+    raise NotImplementedError
+    pass
+
+fail_under = 65  # Минимум 63%
