@@ -5,7 +5,7 @@ from sqlalchemy.future import select
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 import logging
-from ..models.user_auth import User, UserUtils
+from src.auth.models.user_auth import User, UserUtils
 import datetime
 
 
