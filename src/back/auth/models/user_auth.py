@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import datetime
-from encryption import DataEncryptor
 from ...config.security import get_security_settings
 from src.back.auth.models.encryption import DataEncryptor
 
