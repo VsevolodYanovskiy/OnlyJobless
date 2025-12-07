@@ -87,10 +87,12 @@ class User(Base):
             if encrypt_email:
                 user.email = data['email']
             else:
-                if 'email_encrypted' in data:
-                    user.email_encrypted = data['email_encrypted']
-                if 'email_salt' in data:
-                    user.email_salt = data['email_salt']
+                user.email_encrypted = data.get('email_encrypted')
+                user.email_salt = data.get('email_salt')
+        else:
+            if 'email_encrypted' in data and not encrypt_email:
+                user.email_encrypted = data.get('email_encrypted')
+                user.email_salt = data.get('email_salt')
         if 'id' in data:
             user.id = data['id']
         if 'password_hash' in data:
@@ -147,6 +149,8 @@ class UserUtils:
     @staticmethod
     def mask_email(email: str) -> str:
         """Маскирует email для безопасного отображения"""
+        if email is None:
+            return None
         if '@' not in email:
             return email
         local_part, domain = email.split('@', 1)
