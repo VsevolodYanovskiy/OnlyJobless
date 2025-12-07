@@ -6,6 +6,8 @@ import os
 
 Base = declarative_base()
 
+_database_instance: Optional['Database'] = None
+
 
 class Database:
     """Класс для управления подключением к базе данных и сессиями"""
@@ -29,7 +31,6 @@ class Database:
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """Возвращает новую асинхронную сессию базы данных"""
-
         async with self.async_session_maker() as session:
             try:
                 yield session
@@ -50,16 +51,19 @@ class Database:
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency для FastAPI, предоставляющая асинхронную сессию базы данных"""
-    from . import database_instance
-    async for session in database_instance.get_session():
+    if _database_instance is None:
+        raise RuntimeError("База данных не инициализирована. Сначала вызовите init_database()")
+    
+    async for session in _database_instance.get_session():
         yield session
 
-database_instance: Optional[Database] = None
 
-
-async def init_database(database_url: str) -> Database:
+async def init_database(database_url: str) -> 'Database':
     """Инициализирует базу данных"""
-    global database_instance
-    database_instance = Database(database_url)
-    await database_instance.create_tables()
-    return database_instance
+    global _database_instance
+    _database_instance = Database(database_url)
+    await _database_instance.create_tables()
+    return _database_instance
+
+
+database_instance = _database_instance

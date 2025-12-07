@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -22,32 +23,29 @@ Base = declarative_base()
 class User(Base):
     """Модель пользователя с шифрованием персональных данных"""
     __tablename__ = 'users'
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    email_encrypted: Column[str] = Column(String(512), unique=True, index=True, nullable=True)
-    email_salt: Column[str] = Column(String(255), nullable=True)
-    password_hash: Column[str] = Column(String(255), nullable=True)
-    created_at: Column[datetime.datetime] = Column(DateTime, default=func.now())
-    updated_at: Column[datetime.datetime] = Column(DateTime, default=func.now(), onupdate=func.now())
+    id = Column(Integer, primary_key=True, index=True)
+    email_encrypted = Column(String(512), unique=True, index=True, nullable=True)
+    email_salt = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     def __init__(self, email: Optional[str] = None, password_hash: Optional[str] = None, **kwargs):
         """
         Инициализация пользователя с автоматическим шифрованием email.
         """
         super().__init__(**kwargs)
-        self.email_encrypted = None  # type: ignore
-        self.email_salt = None  # type: ignore
-        self.password_hash = None  # type: ignore
         if email:
             self.email = email
         if password_hash:
-            self.password_hash = password_hash
+            self.password_hash = password_hash  # type: ignore
 
     @property
     def email(self) -> Optional[str]:
         """Получает расшифрованный email"""
         if not self.email_encrypted or not self.email_salt:
             return None
-        return encryptor.decrypt(str(self.email_encrypted), str(self.email_salt))
+        return encryptor.decrypt(self.email_encrypted, self.email_salt)  # type: ignore
 
     @email.setter
     def email(self, value: str) -> None:

@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
@@ -134,7 +134,7 @@ class UserRepository:
             stmt = select(User).limit(limit).offset(offset)
             result = await self.db_session.execute(stmt)
             users = result.scalars().all()
-            return list(users)  # Convert Sequence to List
+            return list(users)
         except Exception as e:
             logger.error(f"Ошибка при получении списка пользователей: {e}")
             return []
