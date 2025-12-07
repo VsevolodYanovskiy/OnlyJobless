@@ -53,7 +53,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency для FastAPI, предоставляющая асинхронную сессию базы данных"""
     if _database_instance is None:
         raise RuntimeError("База данных не инициализирована. Сначала вызовите init_database()")
-    
     async for session in _database_instance.get_session():
         yield session
 
