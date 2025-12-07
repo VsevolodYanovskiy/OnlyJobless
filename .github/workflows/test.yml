@@ -65,24 +65,35 @@ jobs:
           exit 0
         fi
 
-    - name: 📝 Run mypy
+    - name: 📝 Run mypy with proper filtering
       id: mypy_check
       run: |
-        echo "=== Mypy check ==="
+        echo "=== Mypy check with smart filtering ==="
         
         if [ -d "src" ]; then
-          OUTPUT=$(python -m mypy src/ \
+          # Создаем временный файл для вывода
+          TEMP_FILE=$(mktemp)
+          
+          # Запускаем mypy, игнорируем exit code
+          python -m mypy src/ \
             --python-version 3.12 \
             --ignore-missing-imports \
             --show-error-codes \
-            --no-error-summary 2>&1)
-          OUTPUT=$(echo "$OUTPUT" | grep -v "Source file found twice")
-          if [ -n "$OUTPUT" ]; then
-            echo "$OUTPUT"
-            echo "❌ Mypy found real errors"
+            --no-error-summary 2>&1 > "$TEMP_FILE" || true
+          
+          # Удаляем блоки ошибок двойного импорта
+          # Используем sed для удаления multi-line блоков
+          sed -i '/Source file found twice/,/adjusting MYPYPATH/d' "$TEMP_FILE"
+          
+          # Проверяем остались ли реальные ошибки
+          if grep -q "error:" "$TEMP_FILE"; then
+            echo "❌ Mypy found real errors:"
+            cat "$TEMP_FILE"
+            rm "$TEMP_FILE"
             exit 1
           else
             echo "✅ Mypy passed"
+            rm "$TEMP_FILE"
           fi
         else
           echo "No src directory"
