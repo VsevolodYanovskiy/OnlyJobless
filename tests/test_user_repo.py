@@ -15,13 +15,18 @@ class TestUserRepository:
     def mock_db_session(self):
         """Фикстура для мок-сессии БД"""
         session = AsyncMock(spec=AsyncSession)
+        
+        # Правильно настраиваем execute
         session.execute = AsyncMock()
+        
+        # Правильно настраиваем delete (ВАЖНО: не AsyncMock для самого метода)
+        session.delete = MagicMock()  # delete не async метод в SQLAlchemy!
+        
         session.add = MagicMock()
         session.commit = AsyncMock()
         session.rollback = AsyncMock()
         session.flush = AsyncMock()
         session.refresh = AsyncMock()
-        session.delete = AsyncMock()
         return session
     
     @pytest.fixture
@@ -155,15 +160,15 @@ class TestUserRepository:
     @pytest.mark.asyncio
     async def test_get_user_by_email_success(self, user_repository, mock_db_session, mock_user):
         """Тест: успешное получение пользователя по email"""
-        # Arrange - ПРАВИЛЬНОЕ async мокирование
-        mock_scalars = MagicMock()
-        mock_scalars.all = AsyncMock(return_value=[mock_user])
+        # Arrange
+        # Создаем правильную цепочку моков
+        mock_scalars_result = MagicMock()
+        mock_scalars_result.all = AsyncMock(return_value=[mock_user])
         
-        mock_result = MagicMock()
-        mock_result.scalars = MagicMock(return_value=mock_scalars)
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars = MagicMock(return_value=mock_scalars_result)
         
-        # Важно: execute должен возвращать результат, а не корутину
-        mock_db_session.execute = AsyncMock(return_value=mock_result)
+        mock_db_session.execute = AsyncMock(return_value=mock_execute_result)
         
         # Act
         result = await user_repository.get_user_by_email("test@example.com")
@@ -235,36 +240,36 @@ class TestUserRepository:
     async def test_delete_user_success(self, user_repository, mock_db_session, mock_user):
         """Тест: успешное удаление пользователя"""
         # Arrange
-        mock_execute_result = MagicMock()
-        mock_execute_result.scalar_one_or_none = AsyncMock(return_value=mock_user)
+        mock_scalar_result = MagicMock()
+        mock_scalar_result.scalar_one_or_none = AsyncMock(return_value=mock_user)
         
-        mock_db_session.execute = AsyncMock(return_value=mock_execute_result)
-        
-        # ВАЖНО: delete должен быть AsyncMock
-        mock_db_session.delete = AsyncMock()
+        mock_db_session.execute = AsyncMock(return_value=mock_scalar_result)
         
         # Act
         result = await user_repository.delete_user(1)
         
         # Assert
         assert result is True
-        mock_db_session.delete.assert_awaited_once_with(mock_user)  # assert_awaited_once_with для async
+        # В SQLAlchemy delete - это обычный метод, не async
+        mock_db_session.delete.assert_called_once_with(mock_user)
         mock_db_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio  
     async def test_delete_user_not_found(self, user_repository, mock_db_session):
         """Тест: удаление несуществующего пользователя"""
         # Arrange
-        mock_execute_result = MagicMock()
-        mock_execute_result.scalar_one_or_none = AsyncMock(return_value=None)
+        mock_scalar_result = MagicMock()
+        mock_scalar_result.scalar_one_or_none = AsyncMock(return_value=None)
         
-        mock_db_session.execute = AsyncMock(return_value=mock_execute_result)
+        mock_db_session.execute = AsyncMock(return_value=mock_scalar_result)
         
         # Act
         result = await user_repository.delete_user(999)
         
         # Assert
         assert result is False
+        # Если пользователь не найден, delete не должен вызываться
+        mock_db_session.delete.assert_not_called()
     
     @pytest.mark.asyncio
     async def test_get_all_users(self, user_repository, mock_db_session, mock_result):
