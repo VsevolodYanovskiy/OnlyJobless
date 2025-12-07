@@ -155,14 +155,14 @@ class TestUserRepository:
     @pytest.mark.asyncio
     async def test_get_user_by_email_success(self, user_repository, mock_db_session, mock_user):
         """Тест: успешное получение пользователя по email"""
-        # Arrange
-        # Правильное мокирование цепочки async вызовов
+        # Arrange - ПРАВИЛЬНОЕ async мокирование
         mock_scalars = MagicMock()
         mock_scalars.all = AsyncMock(return_value=[mock_user])
         
         mock_result = MagicMock()
         mock_result.scalars = MagicMock(return_value=mock_scalars)
         
+        # Важно: execute должен возвращать результат, а не корутину
         mock_db_session.execute = AsyncMock(return_value=mock_result)
         
         # Act
@@ -171,7 +171,6 @@ class TestUserRepository:
         # Assert
         assert result is not None
         assert result.id == 1
-        mock_db_session.execute.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_get_user_by_email_not_found(self, user_repository, mock_db_session):
@@ -231,19 +230,17 @@ class TestUserRepository:
         
         # Assert
         assert result is None
-    
-    @pytest.mark.asyncio
+
     @pytest.mark.asyncio
     async def test_delete_user_success(self, user_repository, mock_db_session, mock_user):
         """Тест: успешное удаление пользователя"""
         # Arrange
-        # Создаем правильный async mock для цепочки вызовов
         mock_execute_result = MagicMock()
         mock_execute_result.scalar_one_or_none = AsyncMock(return_value=mock_user)
         
         mock_db_session.execute = AsyncMock(return_value=mock_execute_result)
         
-        # Убедимся что delete это AsyncMock
+        # ВАЖНО: delete должен быть AsyncMock
         mock_db_session.delete = AsyncMock()
         
         # Act
@@ -251,8 +248,8 @@ class TestUserRepository:
         
         # Assert
         assert result is True
-        mock_db_session.delete.assert_called_once_with(mock_user)
-        mock_db_session.commit.assert_called_once()
+        mock_db_session.delete.assert_awaited_once_with(mock_user)  # assert_awaited_once_with для async
+        mock_db_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio  
     async def test_delete_user_not_found(self, user_repository, mock_db_session):

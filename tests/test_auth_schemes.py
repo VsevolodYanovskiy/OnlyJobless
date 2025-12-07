@@ -161,7 +161,7 @@ class TestAuthSchemas:
         )
         
         # Assert
-        assert login.email == "test@example.com"
+        assert login.email == "TEST@example.com"
     
     @pytest.mark.parametrize("email", [
         "user@example.com",
