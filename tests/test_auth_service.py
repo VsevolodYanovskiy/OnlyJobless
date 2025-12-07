@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from src.back.auth.services.auth_service import AuthService
-from src.back.auth.schemas.auth_schemas import UserRegister, UserLogin
+from src.back.schemes.auth_schemes import UserRegister, UserLogin
 from src.back.auth.models.user_auth import User
 from src.back.auth.services.password_service import PasswordService
 
