@@ -14,14 +14,11 @@ class TestAuthSchemas:
     
     def test_user_register_valid(self):
         """Тест: валидные данные для регистрации"""
-        # Act
         user = UserRegister(
             email="test@example.com",
             password="StrongPass123!",
             password_confirm="StrongPass123!"
         )
-        
-        # Assert
         assert user.email == "test@example.com"
         assert user.password == "StrongPass123!"
         assert user.password_confirm == "StrongPass123!"
@@ -52,7 +49,6 @@ class TestAuthSchemas:
         with pytest.raises(ValidationError):
             UserRegister(
                 email="test@example.com",
-                # Пропущены password и password_confirm
             )
     
     def test_user_login_valid(self):
@@ -62,8 +58,6 @@ class TestAuthSchemas:
             email="test@example.com",
             password="StrongPass123!"
         )
-        
-        # Assert
         assert login.email == "test@example.com"
         assert login.password == "StrongPass123!"
     
@@ -79,88 +73,64 @@ class TestAuthSchemas:
     
     def test_user_response_valid(self):
         """Тест: валидные данные ответа пользователя"""
-        # Arrange
         created_at = datetime(2024, 1, 1, 12, 0, 0)
-        
-        # Act
         response = UserResponse(
             id=1,
             email="test@example.com",
             created_at=created_at
         )
-        
-        # Assert
         assert response.id == 1
         assert response.email == "test@example.com"
         assert response.created_at == created_at
     
     def test_user_response_from_orm(self):
         """Тест: создание ответа из ORM объекта"""
-        # Arrange
         class MockUser:
             def __init__(self):
                 self.id = 1
                 self.email = "test@example.com"
                 self.created_at = datetime(2024, 1, 1, 12, 0, 0)
-        
         mock_user = MockUser()
-        
-        # Act
         response = UserResponse.model_validate(mock_user)
-        
-        # Assert
         assert response.id == 1
         assert response.email == "test@example.com"
         assert response.created_at == mock_user.created_at
     
     def test_token_response_valid(self):
         """Тест: валидные данные токена"""
-        # Act
         token = TokenResponse(
             access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             token_type="bearer",
             expires_in=1800
         )
-        
-        # Assert
         assert token.access_token == "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         assert token.token_type == "bearer"
         assert token.expires_in == 1800
     
     def test_token_response_default_token_type(self):
         """Тест: токен с дефолтным типом"""
-        # Act
         token = TokenResponse(
             access_token="token123",
             expires_in=1800
         )
-        
-        # Assert
-        assert token.token_type == "bearer"  # Дефолтное значение
+        assert token.token_type == "bearer"
         assert token.expires_in == 1800
     
     def test_user_register_email_normalization(self):
         """Тест: нормализация email при регистрации"""
-        # Pydantic автоматически нормализует email
-        # Act
         user = UserRegister(
             email="TEST@EXAMPLE.COM",
             password="StrongPass123!",
             password_confirm="StrongPass123!"
         )
-        
-        # Assert
-        assert user.email == "test@example.com"  # Pydantic не меняет case для локальной части
+        assert user.email == "test@example.com"
     
     def test_user_login_email_normalization(self):
         """Тест: нормализация email при входе"""
-        # Act
         login = UserLogin(
             email="TEST@EXAMPLE.COM",
             password="StrongPass123!"
         )
-        
-        # Assert
         assert login.email == "TEST@example.com"
     
     @pytest.mark.parametrize("email", [
@@ -174,13 +144,11 @@ class TestAuthSchemas:
     ])
     def test_valid_email_formats(self, email):
         """Тест: различные валидные форматы email"""
-        # Act & Assert
         UserRegister(
             email=email,
             password="StrongPass123!",
             password_confirm="StrongPass123!"
         )
-        # Не должно быть исключения
     
     @pytest.mark.parametrize("email", [
         "invalid",
@@ -202,25 +170,17 @@ class TestAuthSchemas:
     
     def test_schema_configs(self):
         """Тест: конфигурации схем"""
-        # Проверяем что у UserResponse включен orm_mode
         assert UserResponse.model_config.get("from_attributes") is True
-        
-        # Проверяем что у TokenResponse есть дефолты
         token = TokenResponse(access_token="test", expires_in=3600)
-        assert token.token_type == "bearer"  # Из дефолта
+        assert token.token_type == "bearer"
     
     def test_serialization(self):
         """Тест: сериализация схем"""
-        # Arrange
         user_response = UserResponse(
             id=1,
             email="test@example.com",
             created_at=datetime(2024, 1, 1, 12, 0, 0)
         )
-        
-        # Act
         json_str = user_response.json()
-        
-        # Assert
         assert "test@example.com" in json_str
         assert '"id":1' in json_str

@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import datetime
+import re
 from src.back.config.security import get_security_settings
 from src.back.auth.models.encryption import DataEncryptor
 
@@ -21,33 +22,42 @@ class User(Base):
     """Модель пользователя с шифрованием персональных данных"""
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
-    email_encrypted = Column(String(512), unique=True, index=True, nullable=False)
-    email_salt = Column(String(255), nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    email_encrypted = Column(String(512), unique=True, index=True, nullable=True)
+    email_salt = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-
-    @property
-    def email(self) -> str:
-        """Получает расшифрованный email"""
-        return encryptor.decrypt(self.email_encrypted, self.email_salt)
-
-    @email.setter
-    def email(self, value: str):
-        """Устанавливает email с шифрованием"""
-        encrypted_email, salt = encryptor.encrypt(value)
-        self.email_encrypted = encrypted_email
-        self.email_salt = salt
 
     def __init__(self, email: str = None, password_hash: str = None, **kwargs):
         """
         Инициализация пользователя с автоматическим шифрованием email.
         """
         super().__init__(**kwargs)
+        self.email_encrypted = None
+        self.email_salt = None
+        self.password_hash = None
         if email:
             self.email = email
         if password_hash:
             self.password_hash = password_hash
+
+    @property
+    def email(self) -> str:
+        """Получает расшифрованный email"""
+        if not self.email_encrypted or not self.email_salt:
+            return None
+        return encryptor.decrypt(self.email_encrypted, self.email_salt)
+
+    @email.setter
+    def email(self, value: str):
+        """Устанавливает email с шифрованием"""
+        if value is None:
+            self.email_encrypted = None
+            self.email_salt = None
+        else:
+            encrypted_email, salt = encryptor.encrypt(value)
+            self.email_encrypted = encrypted_email
+            self.email_salt = salt
 
     def to_dict(self, include_encrypted: bool = False) -> dict:
         """
@@ -77,8 +87,9 @@ class User(Base):
             if encrypt_email:
                 user.email = data['email']
             else:
-                if 'email_encrypted' in data and 'email_salt' in data:
+                if 'email_encrypted' in data:
                     user.email_encrypted = data['email_encrypted']
+                if 'email_salt' in data:
                     user.email_salt = data['email_salt']
         if 'id' in data:
             user.id = data['id']
@@ -99,7 +110,7 @@ class User(Base):
     def update_email(self, new_email: str):
         """Безопасно обновляет email с перешифровкой"""
         self.email = new_email
-        self.updated_at = func.now()
+        self.updated_at = datetime.datetime.utcnow()
 
     def verify_email(self, email_to_verify: str) -> bool:
         """
@@ -117,12 +128,21 @@ class User(Base):
 
 class UserUtils:
     """Вспомогательные функции для работы с пользователями"""
+
     @staticmethod
     def validate_email_format(email: str) -> bool:
         """Проверяет формат email"""
-        if not email or '@' not in email:
+        if not email or len(email) > 255:
             return False
-        return len(email) <= 255
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if '@' not in email:
+            return False
+        local_part, domain = email.split('@', 1)
+        if not local_part:
+            return False
+        if not domain or '.' not in domain:
+            return False
+        return bool(re.match(pattern, email))
 
     @staticmethod
     def mask_email(email: str) -> str:
@@ -130,8 +150,10 @@ class UserUtils:
         if '@' not in email:
             return email
         local_part, domain = email.split('@', 1)
-        if len(local_part) <= 2:
-            masked_local = '*' * len(local_part)
+        if len(local_part) == 1:
+            masked_local = '*'
+        elif len(local_part) == 2:
+            masked_local = local_part[0] + '*'
         else:
             masked_local = local_part[0] + '*' * (len(local_part) - 2) + local_part[-1]
         return f"{masked_local}@{domain}"
@@ -141,4 +163,6 @@ class UserUtils:
         """
         Преобразует список пользователей в список словарей.
         """
+        if users is None:
+            return []
         return [user.to_dict(include_encrypted=include_encrypted) for user in users]
