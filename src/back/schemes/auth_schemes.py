@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic_settings import BaseModel, EmailStr, field_validator
 from typing import Optional
 import datetime
 
@@ -8,7 +8,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     password_confirm: str
-    @validator('password_confirm')
+    @field_validator('password_confirm')
     def passwords_match(cls, v, values):
         """Валидатор для проверки совпадения паролей"""
         if 'password' in values and v != values['password']:
