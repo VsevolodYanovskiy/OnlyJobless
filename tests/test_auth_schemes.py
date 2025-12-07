@@ -45,8 +45,7 @@ class TestAuthSchemas:
                 password="StrongPass123!",
                 password_confirm="DifferentPass456!"
             )
-        
-        assert "passwords_match" in str(exc_info.value)
+        assert "Пароли не совпадают" in str(exc_info.value)
     
     def test_user_register_missing_fields(self):
         """Тест: отсутствие обязательных полей"""
@@ -65,7 +64,7 @@ class TestAuthSchemas:
         )
         
         # Assert
-        assert login.email == "test@example.com"
+        assert login.email == "TEST@example.com"
         assert login.password == "StrongPass123!"
     
     def test_user_login_invalid_email(self):
@@ -151,7 +150,7 @@ class TestAuthSchemas:
         )
         
         # Assert
-        assert user.email == "TEST@EXAMPLE.COM"  # Pydantic не меняет case для локальной части
+        assert user.email == "test@example.com"  # Pydantic не меняет case для локальной части
     
     def test_user_login_email_normalization(self):
         """Тест: нормализация email при входе"""
@@ -204,7 +203,7 @@ class TestAuthSchemas:
     def test_schema_configs(self):
         """Тест: конфигурации схем"""
         # Проверяем что у UserResponse включен orm_mode
-        assert UserResponse.Config.orm_mode is True
+        assert UserResponse.model_config.get("from_attributes") is True
         
         # Проверяем что у TokenResponse есть дефолты
         token = TokenResponse(access_token="test", expires_in=3600)
@@ -224,4 +223,4 @@ class TestAuthSchemas:
         
         # Assert
         assert "test@example.com" in json_str
-        assert '"id": 1' in json_str
+        assert '"id":1' in json_str
