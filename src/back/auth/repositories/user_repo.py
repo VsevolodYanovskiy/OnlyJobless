@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
@@ -102,7 +102,7 @@ class UserRepository:
             for key, value in update_data.items():
                 if hasattr(user, key) and not key.startswith('_'):
                     setattr(user, key, value)
-            user.updated_at = datetime.datetime.utcnow()
+            user.updated_at = datetime.datetime.utcnow()  # type: ignore
             await self.db_session.commit()
             await self.db_session.refresh(user)
             logger.info(f"Обновлен пользователь с ID: {user_id}")
@@ -133,7 +133,8 @@ class UserRepository:
         try:
             stmt = select(User).limit(limit).offset(offset)
             result = await self.db_session.execute(stmt)
-            return result.scalars().all()
+            users = result.scalars().all()
+            return list(users)  # Convert Sequence to List
         except Exception as e:
             logger.error(f"Ошибка при получении списка пользователей: {e}")
             return []
@@ -143,7 +144,8 @@ class UserRepository:
         try:
             stmt = select(func.count(User.id))
             result = await self.db_session.execute(stmt)
-            return result.scalar()
+            count = result.scalar()
+            return count if count is not None else 0
         except Exception as e:
             logger.error(f"Ошибка при подсчете пользователей: {e}")
             return 0

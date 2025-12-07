@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 import os
+from typing import Optional
 
 
 class DataEncryptor:
@@ -10,7 +11,7 @@ class DataEncryptor:
     Шифратор данных с использованием ключа и соли.
     Ключ должен храниться отдельно от кода (в переменных окружения, secrets manager и т.д.)
     """
-    def __init__(self, encryption_key: str = None):
+    def __init__(self, encryption_key: Optional[str] = None):
         """
         Инициализация шифратора.
         """
@@ -36,7 +37,7 @@ class DataEncryptor:
             iterations=100000,
         )
         key = base64.urlsafe_b64encode(
-            kdf.derive(self.encryption_key.encode())
+            kdf.derive(self.encryption_key.encode())  # type: ignore
         )
         return key
 

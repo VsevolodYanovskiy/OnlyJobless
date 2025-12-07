@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 import os
 
 
@@ -54,7 +54,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async for session in database_instance.get_session():
         yield session
 
-database_instance = None
+database_instance: Optional[Database] = None
 
 
 async def init_database(database_url: str) -> Database:

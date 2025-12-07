@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import datetime
 import re
+from typing import Optional, Any, Dict, List
 from src.back.config.security import get_security_settings
 from src.back.auth.models.encryption import DataEncryptor
 
@@ -21,45 +22,45 @@ Base = declarative_base()
 class User(Base):
     """Модель пользователя с шифрованием персональных данных"""
     __tablename__ = 'users'
-    id = Column(Integer, primary_key=True, index=True)
-    email_encrypted = Column(String(512), unique=True, index=True, nullable=True)
-    email_salt = Column(String(255), nullable=True)
-    password_hash = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    id: Column[int] = Column(Integer, primary_key=True, index=True)
+    email_encrypted: Column[str] = Column(String(512), unique=True, index=True, nullable=True)
+    email_salt: Column[str] = Column(String(255), nullable=True)
+    password_hash: Column[str] = Column(String(255), nullable=True)
+    created_at: Column[datetime.datetime] = Column(DateTime, default=func.now())
+    updated_at: Column[datetime.datetime] = Column(DateTime, default=func.now(), onupdate=func.now())
 
-    def __init__(self, email: str = None, password_hash: str = None, **kwargs):
+    def __init__(self, email: Optional[str] = None, password_hash: Optional[str] = None, **kwargs):
         """
         Инициализация пользователя с автоматическим шифрованием email.
         """
         super().__init__(**kwargs)
-        self.email_encrypted = None
-        self.email_salt = None
-        self.password_hash = None
+        self.email_encrypted = None  # type: ignore
+        self.email_salt = None  # type: ignore
+        self.password_hash = None  # type: ignore
         if email:
             self.email = email
         if password_hash:
             self.password_hash = password_hash
 
     @property
-    def email(self) -> str:
+    def email(self) -> Optional[str]:
         """Получает расшифрованный email"""
         if not self.email_encrypted or not self.email_salt:
             return None
-        return encryptor.decrypt(self.email_encrypted, self.email_salt)
+        return encryptor.decrypt(str(self.email_encrypted), str(self.email_salt))
 
     @email.setter
-    def email(self, value: str):
+    def email(self, value: str) -> None:
         """Устанавливает email с шифрованием"""
         if value is None:
-            self.email_encrypted = None
-            self.email_salt = None
+            self.email_encrypted = None  # type: ignore
+            self.email_salt = None  # type: ignore
         else:
             encrypted_email, salt = encryptor.encrypt(value)
-            self.email_encrypted = encrypted_email
-            self.email_salt = salt
+            self.email_encrypted = encrypted_email  # type: ignore
+            self.email_salt = salt  # type: ignore
 
-    def to_dict(self, include_encrypted: bool = False) -> dict:
+    def to_dict(self, include_encrypted: bool = False) -> Dict[str, Any]:
         """
         Преобразует объект пользователя в словарь.
         """
@@ -78,7 +79,7 @@ class User(Base):
         return result
 
     @classmethod
-    def from_dict(cls, data: dict, encrypt_email: bool = True) -> 'User':
+    def from_dict(cls, data: Dict[str, Any], encrypt_email: bool = True) -> 'User':
         """
         Создает объект пользователя из словаря.
         """
@@ -87,32 +88,32 @@ class User(Base):
             if encrypt_email:
                 user.email = data['email']
             else:
-                user.email_encrypted = data.get('email_encrypted')
-                user.email_salt = data.get('email_salt')
+                user.email_encrypted = data.get('email_encrypted')  # type: ignore
+                user.email_salt = data.get('email_salt')  # type: ignore
         else:
             if 'email_encrypted' in data and not encrypt_email:
-                user.email_encrypted = data.get('email_encrypted')
-                user.email_salt = data.get('email_salt')
+                user.email_encrypted = data.get('email_encrypted')  # type: ignore
+                user.email_salt = data.get('email_salt')  # type: ignore
         if 'id' in data:
-            user.id = data['id']
+            user.id = data['id']  # type: ignore
         if 'password_hash' in data:
-            user.password_hash = data['password_hash']
+            user.password_hash = data['password_hash']  # type: ignore
         if 'created_at' in data and data['created_at']:
             if isinstance(data['created_at'], str):
-                user.created_at = datetime.datetime.fromisoformat(data['created_at'].replace('Z', '+00:00'))
+                user.created_at = datetime.datetime.fromisoformat(data['created_at'].replace('Z', '+00:00'))  # type: ignore
             else:
-                user.created_at = data['created_at']
+                user.created_at = data['created_at']  # type: ignore
         if 'updated_at' in data and data['updated_at']:
             if isinstance(data['updated_at'], str):
-                user.updated_at = datetime.datetime.fromisoformat(data['updated_at'].replace('Z', '+00:00'))
+                user.updated_at = datetime.datetime.fromisoformat(data['updated_at'].replace('Z', '+00:00'))  # type: ignore
             else:
-                user.updated_at = data['updated_at']
+                user.updated_at = data['updated_at']  # type: ignore
         return user
 
-    def update_email(self, new_email: str):
+    def update_email(self, new_email: str) -> None:
         """Безопасно обновляет email с перешифровкой"""
         self.email = new_email
-        self.updated_at = datetime.datetime.utcnow()
+        self.updated_at = datetime.datetime.utcnow()  # type: ignore
 
     def verify_email(self, email_to_verify: str) -> bool:
         """
@@ -147,7 +148,7 @@ class UserUtils:
         return bool(re.match(pattern, email))
 
     @staticmethod
-    def mask_email(email: str) -> str:
+    def mask_email(email: Optional[str]) -> Optional[str]:
         """Маскирует email для безопасного отображения"""
         if email is None:
             return None
@@ -163,7 +164,7 @@ class UserUtils:
         return f"{masked_local}@{domain}"
 
     @staticmethod
-    def users_to_dict_list(users: list, include_encrypted: bool = False) -> list:
+    def users_to_dict_list(users: List[User], include_encrypted: bool = False) -> List[Dict[str, Any]]:
         """
         Преобразует список пользователей в список словарей.
         """

@@ -63,7 +63,7 @@ jobs:
     - name: 📝 Run mypy with proper filtering
       id: mypy_check
       run: |
-        echo "=== Mypy check with smart filtering ==="
+        echo "=== Mypy check ==="
         
         if [ -d "src" ]; then
 
