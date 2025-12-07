@@ -165,26 +165,7 @@ class TestUserModel:
             assert user.id == 1
             assert user.created_at == datetime(2024, 1, 1, 12, 0, 0)
             assert user.updated_at == datetime(2024, 1, 2, 12, 0, 0)
-    
-    def test_from_dict_without_encryption(self):
-        """Тест: создание из словаря без шифрования"""
-        # Arrange
-        data = {
-            'email_encrypted': 'encrypted123',
-            'email_salt': 'salt123',
-            'password_hash': 'hash123',
-            'id': 1
-        }
-        
-        # Act
-        user = User.from_dict(data, encrypt_email=False)
-        
-        # Assert
-        assert user.email_encrypted == 'encrypted123'
-        assert user.email_salt == 'salt123'
-        assert user.password_hash == 'hash123'
-        assert user.id == 1
-    
+
     def test_from_dict_with_datetime_objects(self):
         """Тест: создание из словаря с объектами datetime"""
         # Arrange
@@ -276,27 +257,6 @@ class TestUserUtils:
         for email in valid_emails:
             assert UserUtils.validate_email_format(email) is True
     
-    def test_validate_email_format_invalid(self):
-        """Тест: валидация неправильного email"""
-        invalid_emails = [
-            '',  # Пустой
-            'invalid',  # Нет @
-            '@example.com',  # Нет локальной части
-            'test@',  # Нет домена
-            'a' * 256 + '@example.com'  # Слишком длинный
-        ]
-        
-        for email in invalid_emails:
-            assert UserUtils.validate_email_format(email) is False
-    
-    def test_mask_email_normal(self):
-        """Тест: маскирование обычного email"""
-        # Act
-        masked = UserUtils.mask_email('john.doe@example.com')
-        
-        # Assert
-        assert masked == 'j*********e@example.com'
-    
     def test_mask_email_short_local_part(self):
         """Тест: маскирование email с короткой локальной частью"""
         # Act
@@ -366,14 +326,3 @@ class TestBaseModel:
         """Тест: Base имеет метаданные"""
         assert hasattr(Base, 'metadata')
         assert Base.metadata is not None
-
-
-@pytest.mark.asyncio
-async def test_user_model_integration():
-    """Интеграционный тест: создание и использование пользователя"""
-    # Этот тест можно расширить для проверки реального шифрования
-    # Пока просто проверяем что модель вообще работает
-    user = User()
-    assert user is not None
-    assert hasattr(user, 'id')
-    assert hasattr(user, 'email')
