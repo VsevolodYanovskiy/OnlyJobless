@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 from pydantic import ValidationError
-from src.back.auth.schemas.auth_schemas import (
+from src.back.auth.schemes.auth_schemes import (
     UserRegister, 
     UserLogin, 
     UserResponse, 
