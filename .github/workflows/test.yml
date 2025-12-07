@@ -27,10 +27,16 @@ jobs:
       id: install_deps
       run: |
         python -m pip install --upgrade pip
-        pip install bcrypt pytest pytest-cov flake8 mypy
         
+        # Правильный путь к requirements.txt
         if [ -f docs/requirements.txt ]; then
-          pip install -r docs/requirements.txt 2>/dev/null || true
+          echo "Installing dependencies from docs/requirements.txt..."
+          pip install -r docs/requirements.txt
+        else
+          echo "ERROR: docs/requirements.txt not found!"
+          # Минимальные зависимости для продолжения
+          pip install bcrypt pytest pytest-cov flake8 mypy
+          exit 1  # Можно выйти с ошибкой, если зависимости критичны
         fi
     
     - name: 🔍 Check project structure
