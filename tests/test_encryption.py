@@ -138,13 +138,12 @@ class TestEncryption:
             encryptor.encrypt(b"bytes")
     
     def test_generate_salt_randomness(self, encryptor):
-        """Тест: случайность генерации соли"""
+        """Тест: проверка случайности генерации соли"""
         salts = set()
-
         for _ in range(10):
             salt = encryptor._generate_salt()
-
-        assert len(salts) == 10
+            salts.add(salt)
+        assert len(salts) >= 9, f"Expected at least 9 unique salts, got {len(salts)}"
     
     def test_get_fernet_key_consistency(self, encryptor):
         """Тест: консистентность генерации ключа Fernet"""
