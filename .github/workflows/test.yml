@@ -47,26 +47,39 @@ jobs:
         echo "Tests dir exists:" && [ -d "tests" ] && echo "YES" || echo "NO"
         echo "Src dir exists:" && [ -d "src" ] && echo "YES" || echo "NO"
     
-    - name: 🧹 Run flake8 (src only)
+    - name: 🧹 Run flake8 with strict mode and full output
       id: flake8_lint
       run: |
         echo "=== Flake8 checking src/ only ==="
         if [ -d "src" ]; then
-          flake8 src/ --count --max-line-length=120 --statistics
+          # --show-source: показывать проблемный код
+          # --statistics: показать статистику в конце
+          # --count: посчитать все ошибки
+          flake8 src/ \
+            --config=.flake8 \
+            --show-source \
+            --statistics \
+            --count
         else
           echo "No src directory - skipping flake8"
+          exit 0
         fi
-    
-    - name: 📝 Run mypy (src only)
+
+    - name: 📝 Run mypy with strict mode and full output  
       id: mypy_check
       run: |
         echo "=== Mypy checking src/ only ==="
         if [ -d "src" ]; then
-          python -m mypy src/ --config-file=mypy.ini
+          # --show-error-codes: показывать коды ошибок
+          # --no-error-summary: не скрывать ошибки в конце
+          python -m mypy src/ \
+            --config-file=mypy.ini \
+            --show-error-codes \
+            --no-error-summary
         else
           echo "No src directory - skipping mypy"
+          exit 0
         fi
-    
     - name: 🧪 Run tests if they exist
       id: run_tests
       env:
