@@ -8,12 +8,14 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     password_confirm: str
+
     @field_validator('password_confirm')
     @classmethod
     def passwords_match(cls, v, info: ValidationInfo):
         if 'password' in info.data and v != info.data['password']:
             raise ValueError('Пароли не совпадают')
         return v
+
     @field_validator('email')
     @classmethod
     def normalize_email(cls, v: str) -> str:
@@ -32,6 +34,7 @@ class UserResponse(BaseModel):
     email: str
     created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
+
     def to_json(self) -> str:
         return self.model_dump_json()
 

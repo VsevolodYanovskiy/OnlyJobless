@@ -46,7 +46,7 @@ async def get_current_user(
     from ..auth.repositories.user_repo import UserRepository
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_id(int(user_id))
-    
+
     if not user:
         raise HTTPException(
             status_code=401,
@@ -78,7 +78,7 @@ async def optional_auth_middleware(request: Request, call_next):
             token = auth_header.replace("Bearer ", "")
             jwt_service = JWTService(get_security_settings())
             payload = await jwt_service.verify_token_async(token)
-            
+
             if payload:
                 request.state.user_id = payload.get("sub")
                 request.state.user_email = payload.get("email")

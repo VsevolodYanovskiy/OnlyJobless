@@ -10,7 +10,8 @@ class SecuritySettings(BaseSettings):
     access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     cors_origins: List[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
     encryption_key: str = os.getenv("ENCRYPTION_KEY", "")
-    
+
+
     class Config:
         env_file = ".env"
 

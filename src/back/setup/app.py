@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
-import asyncio
+from ..database.database import init_database
+from ..config.security import get_security_settings
+from ..middleware.auth_middleware import optional_auth_middleware
+from ..auth.controllers.auth_controller import router as auth_router
 
 
 logger = logging.getLogger(__name__)
@@ -12,8 +15,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Lifespan для управления событиями запуска и остановки"""
     logger.info("Запуск приложения...")
-    from ..database.database import init_database
-    from ..config.security import get_security_settings
     settings = get_security_settings()
     database_url = settings.database_url if hasattr(settings, 'database_url') else "sqlite+aiosqlite:///./app.db"
     try:
@@ -27,7 +28,6 @@ async def lifespan(app: FastAPI):
 
 def create_application() -> FastAPI:
     """Фабрика для создания и настройки FastAPI приложения"""
-    from ..config.security import get_security_settings
     settings = get_security_settings()
     app = FastAPI(
         title="Auth API",
@@ -49,14 +49,13 @@ def setup_middleware(app: FastAPI, settings):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    from ..middleware.auth_middleware import auth_middleware, optional_auth_middleware
     app.middleware("http")(optional_auth_middleware)
 
 
 def setup_routes(app: FastAPI):
     """Регистрирует все роуты приложения"""
-    from ..auth.controllers.auth_controller import router as auth_router
     app.include_router(auth_router)
+
     @app.get("/health")
     async def health_check():
         return {"status": "healthy", "service": "auth-api"}

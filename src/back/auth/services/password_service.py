@@ -1,6 +1,5 @@
 import bcrypt
 import asyncio
-from typing import Optional
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
@@ -40,7 +39,7 @@ class PasswordService:
         PasswordService._validate_password_length(password)
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
-            executor, 
+            executor,
             lambda: bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         )
 
@@ -59,7 +58,9 @@ class PasswordService:
         if not any(char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" for char in password):
             return "This password ain't strong. Password may contain uppercase letters. Try another one"
         if not any(char in "!@#$%^&*()-_+=[]" for char in password):
-            return "This password ain't strong.\n Password may contain at least one of the following special symbols: '! @ # $ % ^ & * ( ) - _ + = [ ]'.\n Try another one"
+            return "This password ain't strong.\n " \
+            "Password may contain at least one of the following special symbols: '! @ # $ % ^ & * ( ) - _ + = [ ]'.\n " \
+            "Try another one"
         return "Your password is strong."
 
     @staticmethod
@@ -86,7 +87,7 @@ class PasswordService:
         if plain_password is None or hashed_password is None:
             logger.warning("Попытка проверки пароля с None значениями (async)")
             return False
-        
+
         loop = asyncio.get_event_loop()
         try:
             return await loop.run_in_executor(

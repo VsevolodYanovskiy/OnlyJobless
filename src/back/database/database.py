@@ -2,7 +2,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.ext.declarative import declarative_base
 from typing import AsyncGenerator
 import os
-import asyncio
 
 
 Base = declarative_base()
@@ -29,16 +28,19 @@ class Database:
         )
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """Возвращает новую асинхронную сессию базы данных"""
+
         async with self.async_session_maker() as session:
             try:
                 yield session
             finally:
                 await session.close()
+
     async def create_tables(self):
         """Создает все таблицы в базе данных"""
         async with self.engine.begin() as conn:
             from ..auth.models.user_auth import Base as AuthBase
             await conn.run_sync(AuthBase.metadata.create_all)
+
     async def close_connection(self):
         """Закрывает соединение с базой данных"""
         if self.engine:

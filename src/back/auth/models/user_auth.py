@@ -16,6 +16,7 @@ except Exception as e:
 
 Base = declarative_base()
 
+
 class User(Base):
     """Модель пользователя с шифрованием персональных данных"""
     __tablename__ = 'users'
@@ -112,6 +113,7 @@ class User(Base):
         Создает пользователя из незашифрованных данных.
         """
         return cls(email=email, password_hash=password_hash)
+
 
 class UserUtils:
     """Вспомогательные функции для работы с пользователями"""

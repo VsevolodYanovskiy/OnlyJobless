@@ -69,6 +69,7 @@ class JWTService:
             )
         except JWTError:
             return None
+
     async def decode_token_async(self, token: str) -> Optional[Dict[str, Any]]:
         """Асинхронно декодирует JWT токен без проверки подписи"""
         loop = asyncio.get_event_loop()

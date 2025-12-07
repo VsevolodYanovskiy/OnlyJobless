@@ -1,4 +1,3 @@
-import asyncio
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -14,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 class UserRepository:
     """Асинхронный репозиторий для работы с данными пользователей в базе данных"""
-    
     def __init__(self, db_session: AsyncSession):
         """Инициализация репозитория с асинхронной сессией базы данных"""
         self.db_session = db_session

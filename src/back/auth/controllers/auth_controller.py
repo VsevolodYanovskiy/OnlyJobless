@@ -20,10 +20,12 @@ async def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
     user_repo = UserRepository(db)
     return AuthService(user_repo, password_service)
 
+
 def get_jwt_service() -> JWTService:
     """Dependency для получения JWT сервиса"""
     security_settings = get_security_settings()
     return JWTService(security_settings)
+
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
@@ -52,6 +54,7 @@ async def register(
         created_at=user.created_at
     )
 
+
 @router.post("/login", response_model=TokenResponse)
 async def login(
     login_data: UserLogin,
@@ -73,6 +76,7 @@ async def login(
         access_token=access_token,
         expires_in=jwt_service.settings.access_token_expire_minutes * 60
     )
+
 
 @router.post("/logout")
 async def logout():
