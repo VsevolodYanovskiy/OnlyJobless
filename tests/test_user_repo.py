@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from src.back.auth.repositories.user_repo import UserRepository
 from src.back.auth.models.user_auth import User
-from src.back.auth.models.encryption import DataEncryptor
 
 
 class TestUserRepository:
