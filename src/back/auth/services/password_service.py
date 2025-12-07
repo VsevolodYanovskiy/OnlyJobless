@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 logger = logging.getLogger(__name__)
 executor = ThreadPoolExecutor(max_workers=4)
 
-# Максимальная длина пароля для bcrypt (72 байта)
 BCRYPT_MAX_LENGTH = 72
 
 
