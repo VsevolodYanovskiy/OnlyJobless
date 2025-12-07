@@ -20,7 +20,7 @@ except Exception as e:
 Base = declarative_base()
 
 
-class User(Base):  # type: ignore[misc]
+class User(Base):  # type: ignore[valid-type, misc]
     """Модель пользователя с шифрованием персональных данных"""
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
