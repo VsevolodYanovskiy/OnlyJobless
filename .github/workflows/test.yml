@@ -207,9 +207,9 @@ jobs:
         fi
         
         # Выводим результаты
-        echo "║ Flake8 Linting:   $FLAKE8_ICON $FLAKE8_STATUS                                       ║"
-        echo "║ Mypy Type Check:  $MYPY_ICON $MYPY_STATUS                                    ║"
-        echo "║ Tests Execution:  $TESTS_ICON $TESTS_STATUS                                     ║"
+        echo " Flake8 Linting:   $FLAKE8_ICON $FLAKE8_STATUS"
+        echo " Mypy Type Check:  $MYPY_ICON $MYPY_STATUS"
+        echo " Tests Execution:  $TESTS_ICON $TESTS_STATUS"
         echo "╠══════════════════════════════════════════════════════════════╣"
         
         # Общий статус
