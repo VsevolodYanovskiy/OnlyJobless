@@ -11,7 +11,6 @@ class SecuritySettings(BaseSettings):
     cors_origins: List[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
     encryption_key: str = os.getenv("ENCRYPTION_KEY", "")
 
-
     class Config:
         env_file = ".env"
 

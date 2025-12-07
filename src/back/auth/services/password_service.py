@@ -3,7 +3,6 @@ import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-
 logger = logging.getLogger(__name__)
 executor = ThreadPoolExecutor(max_workers=4)
 
@@ -48,7 +47,6 @@ class PasswordService:
         """Синхронно проверяет сложность пароля"""
         if password is None:
             return "This password ain't strong. Password may contain no less than 8 symbols. Try another one"
-        # Проверяем длину в символах (не байтах)
         if len(password) < 8:
             return "This password ain't strong. Password may contain no less than 8 symbols. Try another one"
         if not any(char in "0123456789" for char in password):
@@ -57,10 +55,11 @@ class PasswordService:
             return "This password ain't strong. Password may contain lowercase letters. Try another one"
         if not any(char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" for char in password):
             return "This password ain't strong. Password may contain uppercase letters. Try another one"
+        s = "This password ain't strong.\n"
+        s += "Password may contain at least one of the following special symbols: '! @ # $ % ^ & * ( ) - _ + = [ ]'.\n"
+        s += "Try another one"
         if not any(char in "!@#$%^&*()-_+=[]" for char in password):
-            return "This password ain't strong.\n " \
-            "Password may contain at least one of the following special symbols: '! @ # $ % ^ & * ( ) - _ + = [ ]'.\n " \
-            "Try another one"
+            return s
         return "Your password is strong."
 
     @staticmethod

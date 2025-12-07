@@ -26,6 +26,7 @@ class Database:
             autocommit=False,
             autoflush=False
         )
+
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """Возвращает новую асинхронную сессию базы данных"""
 
@@ -54,6 +55,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 database_instance = None
+
 
 async def init_database(database_url: str) -> Database:
     """Инициализирует базу данных"""
