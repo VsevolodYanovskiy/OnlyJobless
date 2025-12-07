@@ -71,6 +71,13 @@ jobs:
     
     - name: 🧪 Run tests if they exist
       id: run_tests
+      env:
+        ENCRYPTION_KEY: "dGVzdF9rZXlfMzJfY2hhcnNfZm9yX2Flc18yNTY="
+        SECRET_KEY: "test_secret_key_for_ci_1234567890"
+        DATABASE_URL: "sqlite:///./test.db"
+        ENVIRONMENT: "test"
+        JWT_ALGORITHM: "HS256"
+        JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       run: |
         echo "=== Test Execution ==="
         
