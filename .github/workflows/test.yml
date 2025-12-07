@@ -43,7 +43,6 @@ jobs:
     
     - name: 🧹 Run flake8 (src only)
       id: flake8_lint
-      continue-on-error: true
       run: |
         echo "=== Flake8 checking src/ only ==="
         if [ -d "src" ]; then
@@ -54,7 +53,6 @@ jobs:
     
     - name: 📝 Run mypy (src only)
       id: mypy_check
-      continue-on-error: true
       run: |
         echo "=== Mypy checking src/ only ==="
         if [ -d "src" ]; then
