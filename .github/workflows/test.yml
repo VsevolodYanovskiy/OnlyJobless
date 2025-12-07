@@ -207,20 +207,20 @@ jobs:
         fi
         
         # Выводим результаты
-        echo "║ Flake8 Linting:   $FLAKE8_ICON $FLAKE8_STATUS                ║"
-        echo "║ Mypy Type Check:  $MYPY_ICON $MYPY_STATUS                    ║"
-        echo "║ Tests Execution:  $TESTS_ICON $TESTS_STATUS                  ║"
+        echo "║ Flake8 Linting:   $FLAKE8_ICON $FLAKE8_STATUS                                       ║"
+        echo "║ Mypy Type Check:  $MYPY_ICON $MYPY_STATUS                                    ║"
+        echo "║ Tests Execution:  $TESTS_ICON $TESTS_STATUS                                     ║"
         echo "╠══════════════════════════════════════════════════════════════╣"
         
         # Общий статус
         if [ "${{ job.status }}" == "success" ]; then
-          echo "║                    ✨ ALL CHECKS PASSED ✨                    ║"
-          echo "║                      Pipeline: SUCCESS                         ║"
+          echo "║                    ✨ ALL CHECKS PASSED ✨                  ║"
+          echo "║                      Pipeline: SUCCESS                       ║"
         elif [ "${{ job.status }}" == "failure" ]; then
-          echo "║                   💥 SOME CHECKS FAILED 💥                    ║"
-          echo "║                      Pipeline: FAILURE                         ║"
+          echo "║                   💥 SOME CHECKS FAILED 💥                  ║"
+          echo "║                      Pipeline: FAILURE                       ║"
         elif [ "${{ job.status }}" == "cancelled" ]; then
-          echo "║                    🛑 PIPELINE CANCELLED 🛑                   ║"
+          echo "║                    🛑 PIPELINE CANCELLED 🛑                 ║"
         else
           echo "✅ No test files found - SUCCESS"
         fi
