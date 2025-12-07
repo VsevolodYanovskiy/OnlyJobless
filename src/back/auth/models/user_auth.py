@@ -100,12 +100,14 @@ class User(Base):
             user.password_hash = data['password_hash']  # type: ignore
         if 'created_at' in data and data['created_at']:
             if isinstance(data['created_at'], str):
-                user.created_at = datetime.datetime.fromisoformat(data['created_at'].replace('Z', '+00:00'))  # type: ignore
+                user.created_at = datetime.datetime.fromisoformat(data['created_at'].replace('Z',
+                                                                                             '+00:00'))  # type: ignore
             else:
                 user.created_at = data['created_at']  # type: ignore
         if 'updated_at' in data and data['updated_at']:
             if isinstance(data['updated_at'], str):
-                user.updated_at = datetime.datetime.fromisoformat(data['updated_at'].replace('Z', '+00:00'))  # type: ignore
+                user.updated_at = datetime.datetime.fromisoformat(data['updated_at'].replace('Z',
+                                                                                             '+00:00'))  # type: ignore
             else:
                 user.updated_at = data['updated_at']  # type: ignore
         return user
