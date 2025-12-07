@@ -156,7 +156,14 @@ class TestUserRepository:
     async def test_get_user_by_email_success(self, user_repository, mock_db_session, mock_user):
         """Тест: успешное получение пользователя по email"""
         # Arrange
-        mock_db_session.execute.return_value.scalars.return_value.all.return_value = [mock_user]
+        # Правильное мокирование цепочки async вызовов
+        mock_scalars = MagicMock()
+        mock_scalars.all = AsyncMock(return_value=[mock_user])
+        
+        mock_result = MagicMock()
+        mock_result.scalars = MagicMock(return_value=mock_scalars)
+        
+        mock_db_session.execute = AsyncMock(return_value=mock_result)
         
         # Act
         result = await user_repository.get_user_by_email("test@example.com")
@@ -226,10 +233,18 @@ class TestUserRepository:
         assert result is None
     
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_delete_user_success(self, user_repository, mock_db_session, mock_user):
         """Тест: успешное удаление пользователя"""
         # Arrange
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = mock_user
+        # Создаем правильный async mock для цепочки вызовов
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalar_one_or_none = AsyncMock(return_value=mock_user)
+        
+        mock_db_session.execute = AsyncMock(return_value=mock_execute_result)
+        
+        # Убедимся что delete это AsyncMock
+        mock_db_session.delete = AsyncMock()
         
         # Act
         result = await user_repository.delete_user(1)
@@ -238,12 +253,15 @@ class TestUserRepository:
         assert result is True
         mock_db_session.delete.assert_called_once_with(mock_user)
         mock_db_session.commit.assert_called_once()
-    
-    @pytest.mark.asyncio
+
+    @pytest.mark.asyncio  
     async def test_delete_user_not_found(self, user_repository, mock_db_session):
         """Тест: удаление несуществующего пользователя"""
         # Arrange
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = None
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalar_one_or_none = AsyncMock(return_value=None)
+        
+        mock_db_session.execute = AsyncMock(return_value=mock_execute_result)
         
         # Act
         result = await user_repository.delete_user(999)

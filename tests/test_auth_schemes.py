@@ -64,7 +64,7 @@ class TestAuthSchemas:
         )
         
         # Assert
-        assert login.email == "TEST@example.com"
+        assert login.email == "test@example.com"
         assert login.password == "StrongPass123!"
     
     def test_user_login_invalid_email(self):
