@@ -20,4 +20,4 @@ exclude_lines =
     raise NotImplementedError
     pass
 
-fail_under = 65  # Минимум 63%
+fail_under = 65
