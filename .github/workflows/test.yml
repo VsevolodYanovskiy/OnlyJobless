@@ -228,21 +228,21 @@ jobs:
         MYPY_ICON=$(get_icon "${{ steps.mypy_check.outcome }}")
         TESTS_ICON=$(get_icon "${{ steps.run_tests.outcome }}")
         
-        echo "│ $FLAKE8_ICON Flake8 Linting   - Code style (excl. front)               │"
-        echo "│ $MYPY_ICON Mypy Type Check    - Static typing (excl. front)          │"
-        echo "│ $TESTS_ICON Tests Execution   - All test suites                       │"
-        echo "├──────────────────────────────────────────────────────────────┤"
+        echo "│ $FLAKE8_ICON Flake8 Linting   - Code style (excl. front)              │"
+        echo "│ $MYPY_ICON Mypy Type Check    - Static typing (excl. front)         │"
+        echo "│ $TESTS_ICON Tests Execution   - All test suites                      │"
+        echo "├─────────────────────────────────────────────────────────────┤"
         if [ "${{ job.status }}" == "success" ]; then
-          echo "│                    ✨ ALL CHECKS PASSED ✨                  │"
-          echo "│                   ✅  PIPELINE: SUCCESS  ✅                 │"
+          echo "│                    ✨ ALL CHECKS PASSED ✨                 │"
+          echo "│                   ✅  PIPELINE: SUCCESS  ✅                │"
         elif [ "${{ job.status }}" == "failure" ]; then
-          echo "│                   💥 SOME CHECKS FAILED 💥                  │"
-          echo "│                   ❌  PIPELINE: FAILURE  ❌                 │"
+          echo "│                   💥 SOME CHECKS FAILED 💥                 │"
+          echo "│                   ❌  PIPELINE: FAILURE  ❌                │"
         elif [ "${{ job.status }}" == "cancelled" ]; then
-          echo "│                    🛑 PIPELINE CANCELLED 🛑                 │"
-          echo "│                   ⚠️   STATUS: CANCELLED   ⚠️               │"
+          echo "│                    🛑 PIPELINE CANCELLED 🛑                │"
+          echo "│                   ⚠️   STATUS: CANCELLED   ⚠️              │"
         else
-          echo "│                    ⚠️  UNKNOWN STATUS  ⚠️                   │"
+          echo "│                    ⚠️  UNKNOWN STATUS  ⚠️                  │"
         fi
         
         echo "└─────────────────────────────────────────────────────────────┘"
