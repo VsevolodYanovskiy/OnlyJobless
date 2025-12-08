@@ -12,11 +12,10 @@ executor = ThreadPoolExecutor(max_workers=2)
 class JWTService:
     """Асинхронный сервис для работы с JWT токенами"""
     def __init__(self, security_settings: SecuritySettings):
-        """Инициализация сервиса с настройками безопасности"""
         self.settings = security_settings
 
     def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
-        """Синхронно создает JWT токен доступа"""
+        """Создает JWT токен доступа"""
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
@@ -27,10 +26,27 @@ class JWTService:
             "iat": datetime.utcnow(),
             "type": "access"
         })
-
         return jwt.encode(
             to_encode,
             self.settings.secret_key,
+            algorithm=self.settings.algorithm
+        )
+
+    def create_refresh_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+        """Создает JWT refresh токен"""
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(days=self.settings.refresh_token_expire_days)
+        to_encode.update({
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "type": "refresh"
+        })
+        return jwt.encode(
+            to_encode,
+            self.settings.refresh_secret_key,
             algorithm=self.settings.algorithm
         )
 
@@ -42,35 +58,46 @@ class JWTService:
             lambda: self.create_access_token(data, expires_delta)
         )
 
-    def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """Синхронно проверяет валидность JWT токена"""
+    async def create_refresh_token_async(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+        """Асинхронно создает JWT refresh токен"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            executor,
+            lambda: self.create_refresh_token(data, expires_delta)
+        )
+
+    def verify_access_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Проверяет валидность access токена"""
         try:
-            return jwt.decode(
+            payload = jwt.decode(
                 token,
                 self.settings.secret_key,
                 algorithms=[self.settings.algorithm]
             )
+            if payload.get("type") != "access":
+                return None
+            return payload
         except JWTError:
             return None
 
-    async def verify_token_async(self, token: str) -> Optional[Dict[str, Any]]:
-        """Асинхронно проверяет валидность JWT токена"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(executor, lambda: self.verify_token(token))
-
-    def decode_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """Синхронно декодирует JWT токен без проверки подписи"""
+    def verify_refresh_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Проверяет валидность refresh токена"""
         try:
-            return jwt.decode(
+            payload = jwt.decode(
                 token,
-                self.settings.secret_key,
-                algorithms=[self.settings.algorithm],
-                options={"verify_signature": False}
+                self.settings.refresh_secret_key,
+                algorithms=[self.settings.algorithm]
             )
+            if payload.get("type") != "refresh":
+                return None
+            return payload
         except JWTError:
             return None
 
-    async def decode_token_async(self, token: str) -> Optional[Dict[str, Any]]:
-        """Асинхронно декодирует JWT токен без проверки подписи"""
+    async def verify_access_token_async(self, token: str) -> Optional[Dict[str, Any]]:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(executor, lambda: self.decode_token(token))
+        return await loop.run_in_executor(executor, lambda: self.verify_access_token(token))
+
+    async def verify_refresh_token_async(self, token: str) -> Optional[Dict[str, Any]]:
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(executor, lambda: self.verify_refresh_token(token))
