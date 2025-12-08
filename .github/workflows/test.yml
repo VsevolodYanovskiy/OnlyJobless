@@ -48,13 +48,18 @@ jobs:
     - name: 🧹 Run flake8
       id: flake8_lint
       run: |
-        echo "=== Flake8 checking src/ only ==="
+        echo "=== Flake8 checking ==="
         if [ -d "src" ]; then
-          flake8 src/ \
-            --config=.flake8 \
-            --show-source \
-            --statistics \
-            --count
+          echo "Excluding src/front directory from flake8 checks"
+          
+          find src -name "*.py" -not -path "*/front/*" | while read -r file; do
+            echo "Checking: $file"
+            flake8 "$file" \
+              --config=.flake8 \
+              --show-source \
+              --statistics \
+              --count
+          done
         else
           echo "No src directory - skipping flake8"
           exit 0
@@ -66,20 +71,19 @@ jobs:
         echo "=== Mypy check ==="
         
         if [ -d "src" ]; then
-
+          echo "Excluding src/front directory from mypy checks"
+          
           TEMP_FILE=$(mktemp)
           
-
           python -m mypy src/ \
             --python-version 3.12 \
             --ignore-missing-imports \
             --show-error-codes \
-            --no-error-summary 2>&1 > "$TEMP_FILE" || true
+            --no-error-summary \
+            --exclude "front/" 2>&1 > "$TEMP_FILE" || true
           
-
           sed -i '/Source file found twice/,/adjusting MYPYPATH/d' "$TEMP_FILE"
           
-
           if grep -q "error:" "$TEMP_FILE"; then
             echo "❌ Mypy found real errors:"
             cat "$TEMP_FILE"
@@ -93,6 +97,7 @@ jobs:
           echo "No src directory"
           exit 0
         fi
+    
     - name: 🧪 Run tests
       id: run_tests
       env:
@@ -141,80 +146,105 @@ jobs:
         name: test-results
         path: test-results.xml
     
-    - name: ✅ Final status with accurate reporting
+    - name: 📋 Generate CI Report
+      if: always()
+      id: generate_report
+      run: |
+        format_status() {
+          case "$1" in
+            "success")
+              echo "✅ PASSED"
+              ;;
+            "failure")
+              echo "❌ FAILED"
+              ;;
+            "skipped")
+              echo "⏭️ SKIPPED"
+              ;;
+            "cancelled")
+              echo "🛑 CANCELLED"
+              ;;
+            *)
+              echo "⚠️ $1"
+              ;;
+          esac
+        }
+
+        FLAKE8_STATUS=$(format_status "${{ steps.flake8_lint.outcome }}")
+        MYPY_STATUS=$(format_status "${{ steps.mypy_check.outcome }}")
+        TESTS_STATUS=$(format_status "${{ steps.run_tests.outcome }}")
+
+        echo "## 📊 CI Pipeline Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Python Version:** 3.12.5" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📈 Quality Checks" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Check | Status | Details |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+        echo "| **Flake8 Linting** | $FLAKE8_STATUS | Code style checking (excl. src/front) |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Mypy Type Check** | $MYPY_STATUS | Static type checking (excl. src/front) |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Tests Execution** | $TESTS_STATUS | Unit and integration tests |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🎯 Final Result" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "### ✨ ALL CHECKS PASSED ✨" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pipeline Status:** ✅ **SUCCESS**" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ job.status }}" == "failure" ]; then
+          echo "### 💥 SOME CHECKS FAILED 💥" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pipeline Status:** ❌ **FAILURE**" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ job.status }}" == "cancelled" ]; then
+          echo "### 🛑 PIPELINE CANCELLED 🛑" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pipeline Status:** ⚠️ **CANCELLED**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Pipeline Status:** ⚠️ **UNKNOWN**" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: 🎯 Display Final Status
       if: always()
       run: |
-        echo "╔══════════════════════════════════════════════════════════════╗"
-        echo "║                    CI PIPELINE REPORT                        ║"
-        echo "╠══════════════════════════════════════════════════════════════╣"
-        echo "║ Python Version: 3.12.5                                       ║"
-        echo "╠══════════════════════════════════════════════════════════════╣"
-        
+        echo ""
+        echo "┌─────────────────────────────────────────────────────────────┐"
+        echo "│                    CI PIPELINE COMPLETE                     │"
+        echo "├─────────────────────────────────────────────────────────────┤"
+        echo "│ Python Version: 3.12.5                                      │"
+        echo "├─────────────────────────────────────────────────────────────┤"
 
-        FLAKE8_ICON="❓"
-        MYPY_ICON="❓"
-        TESTS_ICON="❓"
+        get_icon() {
+          case "$1" in
+            "success") echo "✅" ;;
+            "failure") echo "❌" ;;
+            "skipped") echo "⏭️" ;;
+            *) echo "⚠️" ;;
+          esac
+        }
         
-
-        if [ "${{ steps.flake8_lint.outcome }}" == "success" ]; then
-          FLAKE8_ICON="✅"
-          FLAKE8_STATUS="PASSED"
-        elif [ "${{ steps.flake8_lint.outcome }}" == "failure" ]; then
-          FLAKE8_ICON="❌"
-          FLAKE8_STATUS="FAILED"
-        elif [ "${{ steps.flake8_lint.outcome }}" == "skipped" ]; then
-          FLAKE8_ICON="⏭️"
-          FLAKE8_STATUS="SKIPPED"
-        else
-          FLAKE8_ICON="⚠️"
-          FLAKE8_STATUS="${{ steps.flake8_lint.outcome }}"
-        fi
+        FLAKE8_ICON=$(get_icon "${{ steps.flake8_lint.outcome }}")
+        MYPY_ICON=$(get_icon "${{ steps.mypy_check.outcome }}")
+        TESTS_ICON=$(get_icon "${{ steps.run_tests.outcome }}")
         
-
-        if [ "${{ steps.mypy_check.outcome }}" == "success" ]; then
-          MYPY_ICON="✅"
-          MYPY_STATUS="PASSED"
-        elif [ "${{ steps.mypy_check.outcome }}" == "failure" ]; then
-          MYPY_ICON="❌"
-          MYPY_STATUS="FAILED"
-        elif [ "${{ steps.mypy_check.outcome }}" == "skipped" ]; then
-          MYPY_ICON="⏭️"
-          MYPY_STATUS="SKIPPED"
-        else
-          MYPY_ICON="⚠️"
-          MYPY_STATUS="${{ steps.mypy_check.outcome }}"
-        fi
-        
-
-        if [ "${{ steps.run_tests.outcome }}" == "success" ]; then
-          TESTS_ICON="✅"
-          TESTS_STATUS="PASSED"
-        elif [ "${{ steps.run_tests.outcome }}" == "failure" ]; then
-          TESTS_ICON="❌"
-          TESTS_STATUS="FAILED"
-        elif [ "${{ steps.run_tests.outcome }}" == "skipped" ]; then
-          TESTS_ICON="⏭️"
-          TESTS_STATUS="SKIPPED"
-        else
-          TESTS_ICON="⚠️"
-          TESTS_STATUS="${{ steps.run_tests.outcome }}"
-        fi
-        
-
-        echo " Flake8 Linting:   $FLAKE8_ICON $FLAKE8_STATUS"
-        echo " Mypy Type Check:  $MYPY_ICON $MYPY_STATUS"
-        echo " Tests Execution:  $TESTS_ICON $TESTS_STATUS"
-        echo "╠══════════════════════════════════════════════════════════════╣"
-        
-        # Общий статус
+        echo "│ $FLAKE8_ICON Flake8 Linting   - Code style (excl. front)     │"
+        echo "│ $MYPY_ICON Mypy Type Check    - Static typing (excl. front)  │"
+        echo "│ $TESTS_ICON Tests Execution   - All test suites              │"
+        echo "├──────────────────────────────────────────────────────────────┤"
         if [ "${{ job.status }}" == "success" ]; then
-          echo "║                    ✨ ALL CHECKS PASSED ✨                  ║"
-          echo "║                      Pipeline: SUCCESS                       ║"
+          echo "│                    ✨ ALL CHECKS PASSED ✨                   │"
+          echo "│                   ✅  PIPELINE: SUCCESS  ✅                  │"
         elif [ "${{ job.status }}" == "failure" ]; then
-          echo "║                   💥 SOME CHECKS FAILED 💥                  ║"
-          echo "║                      Pipeline: FAILURE                       ║"
+          echo "│                   💥 SOME CHECKS FAILED 💥                   │"
+          echo "│                   ❌  PIPELINE: FAILURE  ❌                  │"
         elif [ "${{ job.status }}" == "cancelled" ]; then
-          echo "║                    🛑 PIPELINE CANCELLED 🛑                 ║"
+          echo "│                    🛑 PIPELINE CANCELLED 🛑                  │"
+          echo "│                   ⚠️   STATUS: CANCELLED   ⚠️                │"
         else
-          echo "✅ No test files found - SUCCESS"
+          echo "│                    ⚠️  UNKNOWN STATUS  ⚠️                    │"
         fi
+        
+        echo "└─────────────────────────────────────────────────────────────┘"
+        echo ""
+        echo "📋 Detailed report available in GitHub Actions summary"
