@@ -17,7 +17,6 @@ class PasswordService:
         """Проверяет длину пароля для bcrypt"""
         if password is None:
             raise ValueError("Password cannot be None")
-        # Проверяем длину в байтах (bcrypt ограничивает 72 байтами)
         byte_length = len(password.encode('utf-8'))
         if byte_length > BCRYPT_MAX_LENGTH:
             raise ValueError(
