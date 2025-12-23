@@ -130,3 +130,47 @@ graph TD
 6. Обеспечить возможность отображения истории чатов и использования контекста.
 7. Покрыть тестами.
 8. Развернуть в Dockerhub + облачная среда.
+
+## Запуск:
+
+TERMINAL 1 — BACKEND + DATABASES
+
+cd backend
+
+poetry install
+
+poetry run alembic revision –autogenerate -m “init”
+poetry run alembic upgrade head
+
+docker-compose up -d
+
+poetry run uvicorn app.main:app –reload
+
+Backend будет доступен по адресу:
+http://127.0.0.1:8000
+Swagger UI:
+http://127.0.0.1:8000/docs
+
+⸻
+
+TERMINAL 2 — FRONTEND
+
+cd frontend
+
+npm install
+npm run dev
+
+Frontend будет доступен по адресу:
+http://localhost:5173
+
+⸻
+
+TERMINAL 3 — OLLAMA (LLM)
+
+ollama list
+
+Если нужной модели нет:
+
+ollama pull mistral
+
+Ollama должен быть запущен в фоне.
