@@ -8,25 +8,21 @@ This project represents web-service where you can train your interview skills th
 ```mermaid
 graph TD
     A(OnlyJobless project root)
-    A --> B(Docs)
-    A --> C(Tests)
-    A --> D(src)
-    A --> E(Readme.md)
-    B --> F(Requirements)
-    D --> G(Back)
-    D --> H(Front)
-    D --> I(shared)
-    G --> J(LLM_User logic)
-    G --> K(main)
-    G --> L(config)
-    G <--> R(auth)
-    G <--> S(DB)
-    S <--> R
-    H --> M(public)
-    H --> N(src)
-    J --> O(system promts)
-    J --> P(sending request)
-    J --> Q(getting response)
+    A --> B[project send]
+    B --> C[Backend]
+    B --> D[Frontend]
+    C --> E[app]
+    C --> F[alembic]
+    C --> G[tests]
+    E --> H[auth]
+    E --> I[chat]
+    E --> J[core]
+    E --> K[DB]
+    E --> L[LLM]
+    E --> M[Users]
+    E --> N[Vacancies]
+    D --> O[src]
+    D --> P[public]
 ```
 
 ## DB-Service scheme
