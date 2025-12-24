@@ -316,3 +316,8 @@ ollama list
 ollama pull mistral
 
 Ollama должен быть запущен в фоне.
+
+⸻
+TERMINAL 4 — Pytest
+
+poetry run pytest -v --cov=app --cov-report=term --cov-report=term-missing
