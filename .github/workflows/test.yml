@@ -37,13 +37,6 @@ jobs:
           exit 1
         fi
     
-    - name: 🔍 Check project structure
-      id: check_structure
-      run: |
-        echo "=== Project structure ==="
-        find . -name "*.py" | head -5
-        echo "Tests dir exists:" && [ -d "project send/backend/tests" ] && echo "YES" || echo "NO
-    
     - name: 🧹 Run flake8
       id: flake8_lint
       run: |
