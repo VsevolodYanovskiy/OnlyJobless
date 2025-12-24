@@ -28,11 +28,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
 
-        if [ -f docs/requirements.txt ]; then
-          echo "Installing dependencies from docs/requirements.txt..."
-          pip install -r docs/requirements.txt
+        if [ -f "project send/requirements.txt" ]; then
+          echo "Installing dependencies from requirements.txt..."
+          pip install -r "project send/requirements.txt"
         else
-          echo "ERROR: docs/requirements.txt not found!"
+          echo "ERROR: requirements.txt not found!"
           pip install bcrypt pytest pytest-cov flake8 mypy
           exit 1
         fi
@@ -42,17 +42,16 @@ jobs:
       run: |
         echo "=== Project structure ==="
         find . -name "*.py" | head -5
-        echo "Tests dir exists:" && [ -d "tests" ] && echo "YES" || echo "NO"
-        echo "Src dir exists:" && [ -d "src" ] && echo "YES" || echo "NO"
+        echo "Tests dir exists:" && [ -d "project send/backend/tests" ] && echo "YES" || echo "NO
     
     - name: 🧹 Run flake8
       id: flake8_lint
       run: |
         echo "=== Flake8 checking ==="
-        if [ -d "src" ]; then
+        if [ -d "project send/backend" ]; then
           echo "Excluding src/front directory from flake8 checks"
           
-          find src -name "*.py" -not -path "*/front/*" | while read -r file; do
+          find src -name "*.py" | while read -r file; do
             echo "Checking: $file"
             flake8 "$file" \
               --config=.flake8 \
@@ -61,7 +60,7 @@ jobs:
               --count
           done
         else
-          echo "No src directory - skipping flake8"
+          echo "No directory - skipping flake8"
           exit 0
         fi
 
@@ -70,8 +69,7 @@ jobs:
       run: |
         echo "=== Mypy check ==="
         
-        if [ -d "src" ]; then
-          echo "Excluding src/front directory from mypy checks"
+        if [ -d "project send/backend" ]; then
           
           TEMP_FILE=$(mktemp)
           
@@ -94,7 +92,7 @@ jobs:
             rm "$TEMP_FILE"
           fi
         else
-          echo "No src directory"
+          echo "No directory"
           exit 0
         fi
     
@@ -110,7 +108,7 @@ jobs:
       run: |
         echo "=== Test Execution ==="
         
-        if [ ! -d "tests" ]; then
+        if [ ! -d "project send/backend/tests" ]; then
           echo "✅ No tests directory - SUCCESS"
           exit 0
         fi
@@ -121,7 +119,7 @@ jobs:
         if [ $TEST_COUNT -gt 0 ]; then
           echo "Running tests..."
           
-          if [ -d "src" ]; then
+          if [ -d "project send/backend" ]; then
             python -m pytest tests/ -v --tb=short --cov=src --cov-report=term-missing --junitxml=test-results.xml
             TEST_EXIT_CODE=$?
           else
