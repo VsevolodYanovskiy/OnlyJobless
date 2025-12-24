@@ -48,26 +48,22 @@ jobs:
         JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       run: |
         echo "=== Test Execution ==="
-        
-        if [ ! -d "project send/backend/tests" ]; then
-          echo "✅ No tests directory - SUCCESS"
+        TEST_PATH="project send/backend/tests"
+        BACKEND_PATH="project send/backend"
+        echo "Checking for tests in: $TEST_PATH"
+        if [ ! -d "$TEST_PATH" ]; then
+          echo "✅ No tests directory found at '$TEST_PATH' - SUCCESS"
           exit 0
         fi
-        
-        TEST_COUNT=$(find tests -name "test_*.py" -type f | wc -l)
-        echo "Found $TEST_COUNT test file(s)"
-        
+        TEST_COUNT=$(find "$TEST_PATH" -name "test_*.py" -type f | wc -l)
+        echo "Found $TEST_COUNT test file(s) in $TEST_PATH"
         if [ $TEST_COUNT -gt 0 ]; then
-          echo "Running tests..."
+          echo "Running tests from $TEST_PATH..."
+          cd "project send/backend"
           
-          if [ -d "project send/backend" ]; then
-            python -m pytest tests/ -v --tb=short --cov=src --cov-report=term-missing --junitxml=test-results.xml
-            TEST_EXIT_CODE=$?
-          else
-            python -m pytest tests/ -v --tb=short --junitxml=test-results.xml
-            TEST_EXIT_CODE=$?
-          fi
-          
+          python -m pytest tests/ -v --tb=short --junitxml=../test-results.xml
+          TEST_EXIT_CODE=$?
+          cd ../..
           if [ $TEST_EXIT_CODE -eq 0 ]; then
             echo "✅ All tests passed"
           else
@@ -83,7 +79,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: test-results.xml
+        path: project send/test-results.xml
     
     - name: 📋 Generate CI Report
       if: always()
