@@ -27,39 +27,32 @@ graph TD
 
 ## DB-Service scheme
 ```mermaid
-graph TD
-    A[Client] --> B[Backend Server]
-    
-    B --> C[Controller Layer]
-    
-    C --> D[Auth Service]
-    C --> E[User Service]
-    C --> F[Profile Service]
-    
-    D --> G[Auth Module]
-    E --> H[Data Validation]
-    F --> I[File Storage]
-    
-    G --> J[Database]
-    H --> J
-    I --> J
-    
-    subgraph "Database Scheme"
-        J --> K[users]
-        J --> L[profiles]
-        J --> M[user_data]
-        
-        K --> N["id (PK)<br/>email<br/>password_hash<br/>created_at<br/>updated_at"]
-        L --> O["id (PK)<br/>user_id (FK)<br/>first_name<br/>last_name<br/>"]
-        M --> P["id (PK)<br/>user_id (FK)<br/>content<br/>metadata<br/>created_at"]
-    end
-    
-    J --> B
-    B --> A
-    style J fill:#e1f5fe
-    style K fill:#f3e5f5
-    style L fill:#e8f5e8
-    style M fill:#fff3e0
+erDiagram
+    USERS {
+        UUID id PK
+        VARCHAR username
+        VARCHAR password_hash
+        VARCHAR preferred_language
+        TIMESTAMP created_at
+    }
+
+    CHATS {
+        ObjectId _id PK
+        STRING user_id
+        STRING title
+        DATETIME created_at
+    }
+
+    MESSAGES {
+        ObjectId _id PK
+        ObjectId chat_id
+        STRING role
+        STRING content
+        DATETIME created_at
+    }
+
+    USERS ||--o{ CHATS : owns
+    CHATS ||--o{ MESSAGES : contains
 ```
 
 ## Задачи участников:
